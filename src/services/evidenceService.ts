@@ -5,7 +5,7 @@
 import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'expo-crypto';
 import { EvidenceItem, EvidenceType, GeoLocation } from '../types';
 
 const isWeb = Platform.OS === 'web';
@@ -96,7 +96,7 @@ export async function capturePhoto(
     const location = await getCurrentLocation();
 
     return {
-      id: uuidv4(),
+      id: randomUUID(),
       type: evidenceType,
       uri: asset.uri,
       timestamp: new Date(),
@@ -135,7 +135,7 @@ export async function pickPhotoFromLibrary(
     const location = await getCurrentLocation();
 
     return {
-      id: uuidv4(),
+      id: randomUUID(),
       type: evidenceType,
       uri: asset.uri,
       timestamp: new Date(),

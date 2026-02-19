@@ -8,16 +8,21 @@
 import { ChatMessage, ChatMode, AccidentReport } from '../types';
 import { SYSTEM_PROMPTS, EXTRACTION_PROMPT } from '../constants/prompts';
 
-// Configuration - supports OpenAI-compatible APIs (Kimi/Moonshot, OpenAI, etc.) and Anthropic
+// Configuration - supports OpenAI-compatible APIs and Anthropic
+// Only attempts API calls when EXPO_PUBLIC_LLM_API_KEY is set
+const LLM_API_KEY = (process.env.EXPO_PUBLIC_LLM_API_KEY || '').trim();
+
 const LLM_CONFIG = {
-  apiUrl: process.env.EXPO_PUBLIC_LLM_API_URL || 'https://api.moonshot.cn/v1/chat/completions',
-  apiKey: process.env.EXPO_PUBLIC_LLM_API_KEY || '',
-  model: process.env.EXPO_PUBLIC_LLM_MODEL || 'moonshot-v1-8k',
+  apiUrl: process.env.EXPO_PUBLIC_LLM_API_URL || 'https://api.openai.com/v1/chat/completions',
+  apiKey: LLM_API_KEY,
+  model: process.env.EXPO_PUBLIC_LLM_MODEL || 'gpt-4o-mini',
   maxTokens: 1024,
-  // Auto-detect provider based on URL
+  get isConfigured(): boolean {
+    return LLM_API_KEY.length > 0;
+  },
   get provider(): 'openai-compatible' | 'anthropic' {
     if (this.apiUrl.includes('anthropic.com')) return 'anthropic';
-    return 'openai-compatible'; // Kimi, OpenAI, and other compatible APIs
+    return 'openai-compatible';
   },
 };
 
@@ -33,7 +38,7 @@ export async function sendChatMessage(
   const systemPrompt = SYSTEM_PROMPTS[mode];
 
   // If no API key is configured, use the built-in response generator
-  if (!LLM_CONFIG.apiKey) {
+  if (!LLM_CONFIG.isConfigured) {
     return generateLocalResponse(messages, mode);
   }
 
@@ -99,7 +104,7 @@ export async function sendChatMessage(
 export async function extractReportData(
   messages: ChatMessage[],
 ): Promise<Partial<AccidentReport>> {
-  if (!LLM_CONFIG.apiKey) {
+  if (!LLM_CONFIG.isConfigured) {
     return extractLocally(messages);
   }
 

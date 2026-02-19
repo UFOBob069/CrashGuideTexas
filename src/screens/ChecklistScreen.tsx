@@ -20,12 +20,12 @@ type ChecklistScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Checklist'>;
 };
 
-const CATEGORY_INFO: Record<ChecklistCategory, { icon: string; title: string; color: string }> = {
-  safety: { icon: '🚨', title: 'Immediate Safety', color: COLORS.emergency },
-  medical: { icon: '🏥', title: 'Medical', color: '#E53E3E' },
-  documentation: { icon: '📷', title: 'Documentation', color: COLORS.primaryLight },
-  legal: { icon: '⚖️', title: 'Legal', color: COLORS.primary },
-  insurance: { icon: '🛡️', title: 'Insurance', color: COLORS.accent },
+const CATEGORY_INFO: Record<ChecklistCategory, { icon: string; title: string; color: string; bg: string }> = {
+  safety: { icon: '🚨', title: 'Immediate Safety', color: COLORS.emergency, bg: COLORS.cardRed },
+  medical: { icon: '🏥', title: 'Medical', color: '#DC2626', bg: COLORS.cardRed },
+  documentation: { icon: '📷', title: 'Documentation', color: '#3B82F6', bg: COLORS.cardBlue },
+  legal: { icon: '⚖️', title: 'Legal', color: COLORS.primary, bg: COLORS.cardBlue },
+  insurance: { icon: '🛡️', title: 'Insurance', color: COLORS.accent, bg: COLORS.cardAmber },
 };
 
 const CATEGORY_ORDER: ChecklistCategory[] = [
@@ -43,6 +43,7 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
   const completedCount = checklist.filter((i) => i.isCompleted).length;
   const totalCount = checklist.length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
+  const progressPercent = Math.round(progress * 100);
 
   function getItemsByCategory(category: ChecklistCategory) {
     return checklist
@@ -55,20 +56,27 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backText}>{'<'} Back</Text>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>📋 Accident Checklist</Text>
+        <View style={styles.headerContent}>
+          <Text style={styles.headerTitle}>Accident Checklist</Text>
+        </View>
+        <View style={styles.headerSpacer} />
       </View>
 
-      {/* Progress Bar */}
+      {/* Progress Section */}
       <View style={styles.progressSection}>
+        <View style={styles.progressTop}>
+          <Text style={styles.progressLabel}>Progress</Text>
+          <Text style={styles.progressPercent}>{progressPercent}%</Text>
+        </View>
         <View style={styles.progressBar}>
           <View
-            style={[styles.progressFill, { width: `${progress * 100}%` }]}
+            style={[styles.progressFill, { width: `${progressPercent}%` }]}
           />
         </View>
         <Text style={styles.progressText}>
-          {completedCount} of {totalCount} completed
+          {completedCount} of {totalCount} tasks completed
         </Text>
       </View>
 
@@ -77,54 +85,71 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
           const info = CATEGORY_INFO[category];
           const items = getItemsByCategory(category);
           const categoryCompleted = items.filter((i) => i.isCompleted).length;
+          const allDone = categoryCompleted === items.length;
 
           return (
             <View key={category} style={styles.categorySection}>
-              <View style={styles.categoryHeader}>
-                <Text style={styles.categoryIcon}>{info.icon}</Text>
+              <View style={[styles.categoryHeader, { backgroundColor: info.bg }]}>
+                <View style={[styles.categoryIconWrap, { backgroundColor: info.color }]}>
+                  <Text style={styles.categoryIcon}>{info.icon}</Text>
+                </View>
                 <Text style={styles.categoryTitle}>{info.title}</Text>
-                <Text style={styles.categoryCount}>
-                  {categoryCompleted}/{items.length}
-                </Text>
+                <View style={[
+                  styles.categoryBadge,
+                  allDone && styles.categoryBadgeDone,
+                ]}>
+                  <Text style={[
+                    styles.categoryCount,
+                    allDone && styles.categoryCountDone,
+                  ]}>
+                    {categoryCompleted}/{items.length}
+                  </Text>
+                </View>
               </View>
 
-              {items.map((item) => (
-                <TouchableOpacity
-                  key={item.id}
-                  style={[
-                    styles.checklistItem,
-                    item.isCompleted && styles.checklistItemCompleted,
-                  ]}
-                  onPress={() =>
-                    dispatch({ type: 'TOGGLE_CHECKLIST_ITEM', payload: item.id })
-                  }
-                  activeOpacity={0.7}
-                >
-                  <View
+              <View style={styles.itemsContainer}>
+                {items.map((item, index) => (
+                  <TouchableOpacity
+                    key={item.id}
                     style={[
-                      styles.checkbox,
-                      item.isCompleted && styles.checkboxChecked,
+                      styles.checklistItem,
+                      item.isCompleted && styles.checklistItemCompleted,
+                      index === items.length - 1 && styles.checklistItemLast,
                     ]}
+                    onPress={() =>
+                      dispatch({ type: 'TOGGLE_CHECKLIST_ITEM', payload: item.id })
+                    }
+                    activeOpacity={0.7}
                   >
-                    {item.isCompleted && (
-                      <Text style={styles.checkmark}>✓</Text>
-                    )}
-                  </View>
-                  <View style={styles.checklistContent}>
-                    <Text
+                    <View
                       style={[
-                        styles.checklistTitle,
-                        item.isCompleted && styles.checklistTitleCompleted,
+                        styles.checkbox,
+                        item.isCompleted && styles.checkboxChecked,
                       ]}
                     >
-                      {item.title}
-                    </Text>
-                    <Text style={styles.checklistDescription}>
-                      {item.description}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                      {item.isCompleted && (
+                        <Text style={styles.checkmark}>✓</Text>
+                      )}
+                    </View>
+                    <View style={styles.checklistContent}>
+                      <Text
+                        style={[
+                          styles.checklistTitle,
+                          item.isCompleted && styles.checklistTitleCompleted,
+                        ]}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text style={[
+                        styles.checklistDescription,
+                        item.isCompleted && styles.checklistDescCompleted,
+                      ]}>
+                        {item.description}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
             </View>
           );
         })}
@@ -135,14 +160,16 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
             style={styles.actionButton}
             onPress={() => navigation.navigate('Chat', { mode: 'urgent' })}
           >
-            <Text style={styles.actionButtonText}>🆘 Get Help Now</Text>
+            <Text style={styles.actionButtonIcon}>🆘</Text>
+            <Text style={styles.actionButtonText}>Get Help Now</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.actionButtonSecondary}
             onPress={() => navigation.navigate('Document')}
           >
+            <Text style={styles.actionButtonIcon}>📷</Text>
             <Text style={styles.actionButtonTextSecondary}>
-              📷 Document Accident
+              Document Accident
             </Text>
           </TouchableOpacity>
         </View>
@@ -159,29 +186,57 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
     backgroundColor: COLORS.primary,
   },
   backButton: {
-    marginRight: SPACING.md,
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backText: {
+  backArrow: {
     color: COLORS.textOnPrimary,
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.medium,
+    fontSize: 22,
+    fontWeight: FONT_WEIGHTS.bold,
+    marginTop: -2,
+  },
+  headerContent: {
+    flex: 1,
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.semibold,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnPrimary,
+  },
+  headerSpacer: {
+    width: 36,
   },
   progressSection: {
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.lg,
     backgroundColor: COLORS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    ...SHADOWS.sm,
+  },
+  progressTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  progressLabel: {
+    fontSize: FONT_SIZES.sm,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textSecondary,
+  },
+  progressPercent: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.success,
   },
   progressBar: {
     height: 8,
@@ -195,46 +250,79 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.full,
   },
   progressText: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
-    marginTop: SPACING.xs,
-    textAlign: 'center',
+    marginTop: SPACING.sm,
   },
   scrollContent: {
     paddingBottom: SPACING.xxl,
+    paddingTop: SPACING.md,
   },
   categorySection: {
-    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    marginHorizontal: SPACING.md,
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.lg,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     gap: SPACING.sm,
   },
+  categoryIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: BORDER_RADIUS.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   categoryIcon: {
-    fontSize: 18,
+    fontSize: 16,
   },
   categoryTitle: {
     flex: 1,
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.semibold,
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textPrimary,
   },
+  categoryBadge: {
+    backgroundColor: COLORS.borderLight,
+    borderRadius: BORDER_RADIUS.full,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+  },
+  categoryBadgeDone: {
+    backgroundColor: COLORS.successBg,
+  },
   categoryCount: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textMuted,
-    fontWeight: FONT_WEIGHTS.medium,
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textSecondary,
+    fontWeight: FONT_WEIGHTS.semibold,
+  },
+  categoryCountDone: {
+    color: COLORS.success,
+  },
+  itemsContainer: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+    overflow: 'hidden',
+    ...SHADOWS.sm,
   },
   checklistItem: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
+    gap: SPACING.md,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderLight,
-    gap: SPACING.md,
+  },
+  checklistItemLast: {
+    borderBottomWidth: 0,
   },
   checklistItemCompleted: {
     backgroundColor: COLORS.successBg,
@@ -242,7 +330,7 @@ const styles = StyleSheet.create({
   checkbox: {
     width: 24,
     height: 24,
-    borderRadius: BORDER_RADIUS.sm,
+    borderRadius: BORDER_RADIUS.full,
     borderWidth: 2,
     borderColor: COLORS.border,
     justifyContent: 'center',
@@ -255,7 +343,7 @@ const styles = StyleSheet.create({
   },
   checkmark: {
     color: COLORS.white,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: FONT_WEIGHTS.bold,
   },
   checklistContent: {
@@ -276,30 +364,41 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 20,
   },
+  checklistDescCompleted: {
+    color: COLORS.textMuted,
+  },
   bottomActions: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.lg,
     gap: SPACING.md,
   },
   actionButton: {
     backgroundColor: COLORS.emergency,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.xl,
     paddingVertical: SPACING.md,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: SPACING.sm,
     ...SHADOWS.md,
+  },
+  actionButtonIcon: {
+    fontSize: 18,
   },
   actionButtonText: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.semibold,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnPrimary,
   },
   actionButtonSecondary: {
     backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.lg,
+    borderRadius: BORDER_RADIUS.xl,
     paddingVertical: SPACING.md,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    gap: SPACING.sm,
+    ...SHADOWS.sm,
   },
   actionButtonTextSecondary: {
     fontSize: FONT_SIZES.lg,

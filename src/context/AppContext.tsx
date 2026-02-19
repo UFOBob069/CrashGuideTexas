@@ -3,7 +3,7 @@
 // ============================================================
 
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'expo-crypto';
 import {
   AccidentReport,
   ChatMessage,
@@ -28,7 +28,7 @@ interface AppState {
 }
 
 const createInitialReport = (): AccidentReport => ({
-  id: uuidv4(),
+  id: randomUUID(),
   createdAt: new Date(),
   updatedAt: new Date(),
   incidentType: 'car_accident',

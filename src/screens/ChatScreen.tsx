@@ -18,7 +18,7 @@ import {
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'expo-crypto';
 import { RootStackParamList, ChatMessage, ChatMode, SuggestedAction } from '../types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { useApp } from '../context/AppContext';
@@ -56,7 +56,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     setIsTyping(true);
     const greeting = getInitialGreeting(mode);
     const botMessage: ChatMessage = {
-      id: uuidv4(),
+      id: randomUUID(),
       role: 'assistant',
       content: greeting,
       timestamp: new Date(),
@@ -72,7 +72,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
 
     // Add user message
     const userMessage: ChatMessage = {
-      id: uuidv4(),
+      id: randomUUID(),
       role: 'user',
       content: text,
       timestamp: new Date(),
@@ -87,7 +87,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       const response = await sendChatMessage(allMessages, mode);
 
       const assistantMessage: ChatMessage = {
-        id: uuidv4(),
+        id: randomUUID(),
         role: 'assistant',
         content: response.content,
         timestamp: new Date(),
@@ -102,7 +102,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       }
     } catch (error) {
       const errorMessage: ChatMessage = {
-        id: uuidv4(),
+        id: randomUUID(),
         role: 'assistant',
         content: 'I apologize, but I had trouble responding. Please try again.',
         timestamp: new Date(),
@@ -149,17 +149,27 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           isUser ? styles.userBubble : styles.assistantBubble,
         ]}
       >
-        <Text
-          style={[
-            styles.messageText,
-            isUser ? styles.userText : styles.assistantText,
-          ]}
-        >
-          {item.content}
-        </Text>
-        <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
-          {formatTime(item.timestamp)}
-        </Text>
+        {!isUser && (
+          <View style={styles.assistantAvatar}>
+            <Text style={styles.assistantAvatarText}>CG</Text>
+          </View>
+        )}
+        <View style={[
+          styles.bubbleContent,
+          isUser ? styles.userBubbleContent : styles.assistantBubbleContent,
+        ]}>
+          <Text
+            style={[
+              styles.messageText,
+              isUser ? styles.userText : styles.assistantText,
+            ]}
+          >
+            {item.content}
+          </Text>
+          <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
+            {formatTime(item.timestamp)}
+          </Text>
+        </View>
       </View>
     );
   }
@@ -169,10 +179,13 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       {/* Mode Header */}
       <View style={[styles.modeHeader, { backgroundColor: modeInfo.color }]}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backText}>{'<'} Back</Text>
+          <Text style={styles.backArrow}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.modeIcon}>{modeInfo.icon}</Text>
-        <Text style={styles.modeTitle}>{modeInfo.title}</Text>
+        <View style={styles.modeHeaderContent}>
+          <Text style={styles.modeIcon}>{modeInfo.icon}</Text>
+          <Text style={styles.modeTitle}>{modeInfo.title}</Text>
+        </View>
+        <View style={styles.headerSpacer} />
       </View>
 
       {/* Quick Actions */}
@@ -251,7 +264,11 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       {/* Typing Indicator */}
       {isTyping && (
         <View style={styles.typingIndicator}>
-          <ActivityIndicator size="small" color={COLORS.primary} />
+          <View style={styles.typingDots}>
+            <View style={[styles.typingDot, { opacity: 0.4 }]} />
+            <View style={[styles.typingDot, { opacity: 0.6 }]} />
+            <View style={[styles.typingDot, { opacity: 0.8 }]} />
+          </View>
           <Text style={styles.typingText}>CrashGuide is typing...</Text>
         </View>
       )}
@@ -282,7 +299,7 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             onPress={handleSend}
             disabled={!inputText.trim() || isTyping}
           >
-            <Text style={styles.sendButtonText}>Send</Text>
+            <Text style={styles.sendButtonText}>↑</Text>
           </TouchableOpacity>
         </View>
 
@@ -325,24 +342,39 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
+    paddingHorizontal: SPACING.md,
   },
   backButton: {
-    marginRight: SPACING.md,
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  backText: {
+  backArrow: {
     color: COLORS.textOnPrimary,
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.medium,
+    fontSize: 22,
+    fontWeight: FONT_WEIGHTS.bold,
+    marginTop: -2,
+  },
+  modeHeaderContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.sm,
   },
   modeIcon: {
-    fontSize: 22,
-    marginRight: SPACING.sm,
+    fontSize: 20,
   },
   modeTitle: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.semibold,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnPrimary,
+  },
+  headerSpacer: {
+    width: 36,
   },
   quickActions: {
     flexDirection: 'row',
@@ -351,27 +383,23 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
+    borderBottomColor: COLORS.borderLight,
   },
   quickAction: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.background,
+    backgroundColor: COLORS.borderLight,
     borderRadius: BORDER_RADIUS.full,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   emergencyAction: {
     backgroundColor: COLORS.emergencyBg,
-    borderColor: COLORS.emergency,
   },
   connectAction: {
     backgroundColor: COLORS.successBg,
-    borderColor: COLORS.success,
   },
   quickActionText: {
     fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.medium,
+    fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.textPrimary,
   },
   messagesList: {
@@ -380,23 +408,44 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   messageBubble: {
-    maxWidth: '80%',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: BORDER_RADIUS.lg,
-    marginBottom: SPACING.sm,
+    flexDirection: 'row',
+    marginBottom: SPACING.md,
+    maxWidth: '85%',
   },
   userBubble: {
     alignSelf: 'flex-end',
-    backgroundColor: COLORS.primary,
-    borderBottomRightRadius: BORDER_RADIUS.sm,
   },
   assistantBubble: {
     alignSelf: 'flex-start',
+    gap: SPACING.sm,
+  },
+  assistantAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  assistantAvatarText: {
+    fontSize: 10,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.accent,
+  },
+  bubbleContent: {
+    borderRadius: BORDER_RADIUS.xl,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  userBubbleContent: {
+    backgroundColor: COLORS.primary,
+    borderBottomRightRadius: BORDER_RADIUS.sm,
+  },
+  assistantBubbleContent: {
     backgroundColor: COLORS.surface,
     borderBottomLeftRadius: BORDER_RADIUS.sm,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    ...SHADOWS.sm,
   },
   messageText: {
     fontSize: FONT_SIZES.md,
@@ -415,7 +464,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
   userTimestamp: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: 'rgba(255, 255, 255, 0.5)',
   },
   typingIndicator: {
     flexDirection: 'row',
@@ -424,10 +473,19 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     gap: SPACING.sm,
   },
+  typingDots: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  typingDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.primary,
+  },
   typingText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textMuted,
-    fontStyle: 'italic',
   },
   emptyState: {
     flex: 1,
@@ -446,7 +504,7 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     backgroundColor: COLORS.surface,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
+    borderTopColor: COLORS.borderLight,
     gap: SPACING.sm,
   },
   textInput: {
@@ -454,28 +512,26 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     borderRadius: BORDER_RADIUS.xl,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: 10,
     fontSize: FONT_SIZES.md,
     color: COLORS.textPrimary,
     maxHeight: 100,
-    borderWidth: 1,
-    borderColor: COLORS.border,
   },
   sendButton: {
-    backgroundColor: COLORS.primary,
+    width: 36,
+    height: 36,
     borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: COLORS.textMuted,
+    backgroundColor: COLORS.border,
   },
   sendButtonText: {
     color: COLORS.textOnPrimary,
-    fontWeight: FONT_WEIGHTS.semibold,
-    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold,
+    fontSize: FONT_SIZES.lg,
   },
   complianceFooter: {
     paddingVertical: SPACING.xs,
