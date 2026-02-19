@@ -122,6 +122,7 @@ export default function PrivacyScreen({ navigation }: PrivacyScreenProps) {
         </View>
 
         <View style={styles.contactSection}>
+          <View style={styles.contactAccent} />
           <Text style={styles.contactTitle}>Contact Us</Text>
           <Text style={styles.contactBody}>
             Questions about privacy or terms?{'\n'}
@@ -135,8 +136,21 @@ export default function PrivacyScreen({ navigation }: PrivacyScreenProps) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, backgroundColor: COLORS.primary },
-  backButton: { width: 36, height: 36, borderRadius: BORDER_RADIUS.full, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.primary,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.glass,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backArrow: { color: COLORS.textOnPrimary, fontSize: 22, fontWeight: FONT_WEIGHTS.bold, marginTop: -2 },
   headerContent: { flex: 1, alignItems: 'center' },
   headerTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
@@ -144,11 +158,33 @@ const styles = StyleSheet.create({
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
   title: { fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.xs },
   lastUpdated: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, marginBottom: SPACING.lg },
-  section: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.lg, padding: SPACING.lg, marginBottom: SPACING.md, ...SHADOWS.sm },
+  section: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.lg,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.sm,
+  },
   sectionTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
   body: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary, lineHeight: 22 },
-  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: SPACING.xl },
-  contactSection: { backgroundColor: COLORS.primary, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, marginTop: SPACING.md },
+  divider: { height: 1, backgroundColor: COLORS.borderLight, marginVertical: SPACING.xl },
+  contactSection: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+    overflow: 'hidden',
+  },
+  contactAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+    backgroundColor: COLORS.accent,
+  },
   contactTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnDark, marginBottom: SPACING.sm },
   contactBody: { fontSize: FONT_SIZES.md, color: COLORS.textOnDarkMuted, lineHeight: 22 },
 });

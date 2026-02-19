@@ -12,14 +12,13 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  ActivityIndicator,
   SafeAreaView,
   Linking,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { randomUUID } from 'expo-crypto';
-import { RootStackParamList, ChatMessage, ChatMode, SuggestedAction } from '../types';
+import { RootStackParamList, ChatMessage, ChatMode } from '../types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { useApp } from '../context/AppContext';
 import { sendChatMessage } from '../services/llmService';
@@ -46,7 +45,6 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const modeInfo = MODE_HEADERS[mode];
 
   useEffect(() => {
-    // Send initial greeting if no messages
     if (messages.length === 0) {
       sendInitialMessage();
     }
@@ -70,7 +68,6 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     const text = inputText.trim();
     if (!text || isTyping) return;
 
-    // Add user message
     const userMessage: ChatMessage = {
       id: randomUUID(),
       role: 'user',
@@ -96,7 +93,6 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       };
       dispatch({ type: 'ADD_CHAT_MESSAGE', payload: { mode, message: assistantMessage } });
 
-      // Update report with extracted data
       if (response.extractedData) {
         dispatch({ type: 'UPDATE_REPORT', payload: response.extractedData });
       }
@@ -196,19 +192,22 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
               style={[styles.quickAction, styles.emergencyAction]}
               onPress={() => handleQuickAction('call_911')}
             >
-              <Text style={styles.quickActionText}>📞 Call 911</Text>
+              <Text style={styles.quickActionEmoji}>📞</Text>
+              <Text style={[styles.quickActionText, styles.emergencyActionText]}>Call 911</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickAction}
               onPress={() => handleQuickAction('take_photo')}
             >
-              <Text style={styles.quickActionText}>📷 Photos</Text>
+              <Text style={styles.quickActionEmoji}>📷</Text>
+              <Text style={styles.quickActionText}>Photos</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickAction}
               onPress={() => handleQuickAction('checklist')}
             >
-              <Text style={styles.quickActionText}>📋 Checklist</Text>
+              <Text style={styles.quickActionEmoji}>📋</Text>
+              <Text style={styles.quickActionText}>Checklist</Text>
             </TouchableOpacity>
           </>
         )}
@@ -218,13 +217,15 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
               style={styles.quickAction}
               onPress={() => handleQuickAction('take_photo')}
             >
-              <Text style={styles.quickActionText}>📷 Take Photo</Text>
+              <Text style={styles.quickActionEmoji}>📷</Text>
+              <Text style={styles.quickActionText}>Take Photo</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.quickAction}
               onPress={() => handleQuickAction('switch_intake')}
             >
-              <Text style={styles.quickActionText}>📝 Start Intake</Text>
+              <Text style={styles.quickActionEmoji}>📝</Text>
+              <Text style={styles.quickActionText}>Start Intake</Text>
             </TouchableOpacity>
           </>
         )}
@@ -233,7 +234,8 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             style={[styles.quickAction, styles.connectAction]}
             onPress={() => handleQuickAction('connect_lawyer')}
           >
-            <Text style={styles.quickActionText}>⚖️ Talk to a Lawyer</Text>
+            <Text style={styles.quickActionEmoji}>⚖️</Text>
+            <Text style={[styles.quickActionText, styles.connectActionText]}>Talk to a Lawyer</Text>
           </TouchableOpacity>
         )}
         {mode === 'connect' && (
@@ -241,7 +243,8 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             style={[styles.quickAction, styles.connectAction]}
             onPress={() => handleQuickAction('connect_lawyer')}
           >
-            <Text style={styles.quickActionText}>📞 Call Now</Text>
+            <Text style={styles.quickActionEmoji}>📞</Text>
+            <Text style={[styles.quickActionText, styles.connectActionText]}>Call Now</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -267,9 +270,9 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           <View style={styles.typingDots}>
             <View style={[styles.typingDot, { opacity: 0.4 }]} />
             <View style={[styles.typingDot, { opacity: 0.6 }]} />
-            <View style={[styles.typingDot, { opacity: 0.8 }]} />
+            <View style={[styles.typingDot, { opacity: 0.9 }]} />
           </View>
-          <Text style={styles.typingText}>CrashGuide is typing...</Text>
+          <Text style={styles.typingText}>CrashGuide is thinking...</Text>
         </View>
       )}
 
@@ -279,18 +282,20 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Type your message..."
-            placeholderTextColor={COLORS.textMuted}
-            multiline
-            maxLength={2000}
-            returnKeyType="send"
-            onSubmitEditing={handleSend}
-            blurOnSubmit={false}
-          />
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Type your message..."
+              placeholderTextColor={COLORS.textMuted}
+              multiline
+              maxLength={2000}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+              blurOnSubmit={false}
+            />
+          </View>
           <TouchableOpacity
             style={[
               styles.sendButton,
@@ -303,7 +308,6 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           </TouchableOpacity>
         </View>
 
-        {/* Compliance Footer */}
         <View style={styles.complianceFooter}>
           <Text style={styles.complianceText}>
             General information only — not legal advice
@@ -348,7 +352,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: COLORS.glass,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -376,32 +380,52 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 36,
   },
+
+  // ── Quick Actions ──
   quickActions: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
     gap: SPACING.sm,
     backgroundColor: COLORS.surface,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderLight,
   },
   quickAction: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
-    backgroundColor: COLORS.borderLight,
+    backgroundColor: COLORS.surfaceTinted,
     borderRadius: BORDER_RADIUS.full,
+    gap: SPACING.xs,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   emergencyAction: {
     backgroundColor: COLORS.emergencyBg,
+    borderColor: 'rgba(239, 68, 68, 0.15)',
   },
   connectAction: {
     backgroundColor: COLORS.successBg,
+    borderColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  quickActionEmoji: {
+    fontSize: 14,
   },
   quickActionText: {
     fontSize: FONT_SIZES.sm,
     fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.textPrimary,
   },
+  emergencyActionText: {
+    color: COLORS.emergencyDark,
+  },
+  connectActionText: {
+    color: COLORS.successDark,
+  },
+
+  // ── Messages ──
   messagesList: {
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.md,
@@ -420,13 +444,15 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   assistantAvatar: {
-    width: 28,
-    height: 28,
+    width: 30,
+    height: 30,
     borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
   },
   assistantAvatarText: {
     fontSize: 10,
@@ -436,7 +462,7 @@ const styles = StyleSheet.create({
   bubbleContent: {
     borderRadius: BORDER_RADIUS.xl,
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
   },
   userBubbleContent: {
     backgroundColor: COLORS.primary,
@@ -445,6 +471,8 @@ const styles = StyleSheet.create({
   assistantBubbleContent: {
     backgroundColor: COLORS.surface,
     borderBottomLeftRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     ...SHADOWS.sm,
   },
   messageText: {
@@ -466,6 +494,8 @@ const styles = StyleSheet.create({
   userTimestamp: {
     color: 'rgba(255, 255, 255, 0.5)',
   },
+
+  // ── Typing ──
   typingIndicator: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -478,14 +508,15 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   typingDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
     backgroundColor: COLORS.primary,
   },
   typingText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textMuted,
+    fontStyle: 'italic',
   },
   emptyState: {
     flex: 1,
@@ -497,20 +528,27 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.md,
     color: COLORS.textMuted,
   },
+
+  // ── Input ──
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
     backgroundColor: COLORS.surface,
     borderTopWidth: 1,
     borderTopColor: COLORS.borderLight,
     gap: SPACING.sm,
   },
-  textInput: {
+  inputWrapper: {
     flex: 1,
     backgroundColor: COLORS.background,
     borderRadius: BORDER_RADIUS.xl,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    overflow: 'hidden',
+  },
+  textInput: {
     paddingHorizontal: SPACING.md,
     paddingVertical: 10,
     fontSize: FONT_SIZES.md,
@@ -518,12 +556,13 @@ const styles = StyleSheet.create({
     maxHeight: 100,
   },
   sendButton: {
-    width: 36,
-    height: 36,
+    width: 38,
+    height: 38,
     borderRadius: BORDER_RADIUS.full,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.sm,
   },
   sendButtonDisabled: {
     backgroundColor: COLORS.border,
@@ -534,7 +573,7 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
   },
   complianceFooter: {
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.xs + 2,
     alignItems: 'center',
     backgroundColor: COLORS.surface,
   },

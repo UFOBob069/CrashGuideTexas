@@ -88,7 +88,13 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
         <View style={styles.stepIndicator}>
           {STEPS.slice(0, 3).map((s, i) => (
             <View key={s} style={styles.stepDotRow}>
-              <View style={[styles.stepDot, i <= stepIndex && styles.stepDotActive]} />
+              <View style={[
+                styles.stepDot,
+                i <= stepIndex && styles.stepDotActive,
+                i < stepIndex && styles.stepDotCompleted,
+              ]}>
+                {i < stepIndex && <Text style={styles.stepCheck}>✓</Text>}
+              </View>
               {i < 2 && <View style={[styles.stepLine, i < stepIndex && styles.stepLineActive]} />}
             </View>
           ))}
@@ -210,7 +216,9 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
               <Text style={styles.expectTitle}>What to Expect</Text>
               {[{icon:'📞',text:'Call or text within 24 hours'},{icon:'💬',text:'Free initial consultation'},{icon:'⚖️',text:'No obligation to hire'}].map((item, i) => (
                 <View key={i} style={styles.expectItem}>
-                  <Text style={styles.expectItemIcon}>{item.icon}</Text>
+                  <View style={styles.expectIconWrap}>
+                    <Text style={styles.expectItemIcon}>{item.icon}</Text>
+                  </View>
                   <Text style={styles.expectItemText}>{item.text}</Text>
                 </View>
               ))}
@@ -236,35 +244,109 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: SPACING.md, paddingVertical: SPACING.md, backgroundColor: COLORS.success },
-  backButton: { width: 36, height: 36, borderRadius: BORDER_RADIUS.full, backgroundColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.md,
+    backgroundColor: COLORS.success,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.glass,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   backArrow: { color: COLORS.textOnPrimary, fontSize: 22, fontWeight: FONT_WEIGHTS.bold, marginTop: -2 },
   headerContent: { flex: 1, alignItems: 'center' },
   headerTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
   headerSpacer: { width: 36 },
-  stepIndicator: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: SPACING.md, backgroundColor: COLORS.surface, ...SHADOWS.sm },
+
+  // ── Step Indicator ──
+  stepIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md + 2,
+    backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
+    ...SHADOWS.sm,
+  },
   stepDotRow: { flexDirection: 'row', alignItems: 'center' },
-  stepDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.border },
-  stepDotActive: { backgroundColor: COLORS.success },
-  stepLine: { width: 48, height: 2, backgroundColor: COLORS.border },
+  stepDot: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: COLORS.borderLight,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepDotActive: { borderColor: COLORS.success, backgroundColor: COLORS.successBg },
+  stepDotCompleted: { backgroundColor: COLORS.success, borderColor: COLORS.success },
+  stepCheck: { fontSize: 11, fontWeight: FONT_WEIGHTS.bold, color: COLORS.white },
+  stepLine: { width: 48, height: 2, backgroundColor: COLORS.borderLight },
   stepLineActive: { backgroundColor: COLORS.success },
+
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
-  infoCard: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, alignItems: 'center', ...SHADOWS.md },
-  infoIconWrap: { width: 64, height: 64, borderRadius: BORDER_RADIUS.xl, backgroundColor: COLORS.cardGreen, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
+
+  // ── Info Card ──
+  infoCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.md,
+  },
+  infoIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: BORDER_RADIUS.xxl,
+    backgroundColor: COLORS.cardGreen,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.12)',
+  },
   infoIcon: { fontSize: 32 },
-  infoTitle: { fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, textAlign: 'center', marginBottom: SPACING.md, lineHeight: 30 },
+  infoTitle: {
+    fontSize: FONT_SIZES.xxl,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.textPrimary,
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+    lineHeight: 32,
+  },
   infoText: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary, lineHeight: 22, textAlign: 'center', marginBottom: SPACING.lg },
   benefitsList: { width: '100%', gap: SPACING.md },
   benefitItem: { flexDirection: 'row', alignItems: 'flex-start', gap: SPACING.sm },
   benefitCheck: { width: 22, height: 22, borderRadius: BORDER_RADIUS.full, backgroundColor: COLORS.success, justifyContent: 'center', alignItems: 'center' },
   benefitCheckText: { color: COLORS.white, fontSize: 12, fontWeight: FONT_WEIGHTS.bold },
   benefitText: { fontSize: FONT_SIZES.md, color: COLORS.textPrimary, flex: 1, lineHeight: 22 },
-  primaryButton: { backgroundColor: COLORS.success, borderRadius: BORDER_RADIUS.xl, paddingVertical: SPACING.md, alignItems: 'center', marginTop: SPACING.lg, ...SHADOWS.md },
+
+  // ── Buttons ──
+  primaryButton: {
+    backgroundColor: COLORS.success,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.md + 2,
+    alignItems: 'center',
+    marginTop: SPACING.lg,
+    ...SHADOWS.glow(COLORS.success, 0.25),
+  },
   primaryButtonText: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
   secondaryButton: { paddingVertical: SPACING.md, alignItems: 'center', marginTop: SPACING.sm },
   secondaryButtonText: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.medium, color: COLORS.textMuted },
   disclaimer: { paddingTop: SPACING.lg },
   disclaimerText: { fontSize: FONT_SIZES.xs, color: COLORS.textMuted, lineHeight: 18, textAlign: 'center' },
+
+  // ── Contact Form ──
   stepTitle: { fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.xs },
   stepSubtitle: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary, marginBottom: SPACING.lg },
   form: { gap: SPACING.md },
@@ -272,14 +354,51 @@ const styles = StyleSheet.create({
   formField: {},
   formFieldHalf: { flex: 1 },
   label: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.textPrimary, marginBottom: SPACING.xs },
-  input: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.md, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm + 2, fontSize: FONT_SIZES.md, color: COLORS.textPrimary, borderWidth: 1, borderColor: COLORS.border },
+  input: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 4,
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textPrimary,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
   contactMethodRow: { flexDirection: 'row', gap: SPACING.sm },
-  contactMethodChip: { flex: 1, paddingVertical: SPACING.sm + 2, borderRadius: BORDER_RADIUS.md, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', backgroundColor: COLORS.surface },
+  contactMethodChip: {
+    flex: 1,
+    paddingVertical: SPACING.sm + 4,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+  },
   contactMethodChipSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primary },
   contactMethodText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.textPrimary },
   contactMethodTextSelected: { color: COLORS.textOnPrimary },
-  consentCard: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, alignItems: 'center', ...SHADOWS.md },
-  consentIconWrap: { width: 56, height: 56, borderRadius: BORDER_RADIUS.full, backgroundColor: COLORS.cardBlue, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md },
+
+  // ── Consent ──
+  consentCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.md,
+  },
+  consentIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.cardBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.12)',
+  },
   consentIconEmoji: { fontSize: 28 },
   consentTitle: { fontSize: FONT_SIZES.xl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.md },
   consentText: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary, lineHeight: 22, textAlign: 'center', marginBottom: SPACING.md },
@@ -288,24 +407,91 @@ const styles = StyleSheet.create({
   consentDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary, marginTop: 8 },
   consentItemText: { fontSize: FONT_SIZES.md, color: COLORS.textPrimary, lineHeight: 22, flex: 1 },
   consentDisclaimer: { fontSize: FONT_SIZES.sm, color: COLORS.textMuted, lineHeight: 20, textAlign: 'center' },
-  successCard: { backgroundColor: COLORS.successBg, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, alignItems: 'center' },
-  successIconWrap: { width: 64, height: 64, borderRadius: BORDER_RADIUS.full, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', marginBottom: SPACING.md, ...SHADOWS.sm },
+
+  // ── Success ──
+  successCard: {
+    backgroundColor: COLORS.successBg,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.15)',
+  },
+  successIconWrap: {
+    width: 68,
+    height: 68,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+    ...SHADOWS.soft,
+  },
   successIconEmoji: { fontSize: 32 },
   successTitle: { fontSize: FONT_SIZES.xxl, fontWeight: FONT_WEIGHTS.bold, color: COLORS.success, marginBottom: SPACING.sm },
   successText: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
-  firmCard: { marginTop: SPACING.md, backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.lg, padding: SPACING.md, alignItems: 'center', width: '100%', ...SHADOWS.sm },
+  firmCard: {
+    marginTop: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.md,
+    alignItems: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
+  },
   firmName: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary },
   firmPhone: { fontSize: FONT_SIZES.md, color: COLORS.success, marginTop: SPACING.xs, fontWeight: FONT_WEIGHTS.semibold },
   contactActions: { flexDirection: 'row', gap: SPACING.md, marginTop: SPACING.lg },
-  callButton: { flex: 1, backgroundColor: COLORS.success, borderRadius: BORDER_RADIUS.xl, paddingVertical: SPACING.md, alignItems: 'center', ...SHADOWS.md },
-  textButton: { flex: 1, backgroundColor: COLORS.primary, borderRadius: BORDER_RADIUS.xl, paddingVertical: SPACING.md, alignItems: 'center', ...SHADOWS.md },
+  callButton: {
+    flex: 1,
+    backgroundColor: COLORS.success,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.md + 2,
+    alignItems: 'center',
+    ...SHADOWS.glow(COLORS.success, 0.25),
+  },
+  textButton: {
+    flex: 1,
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.md + 2,
+    alignItems: 'center',
+    ...SHADOWS.lg,
+  },
   actionButtonText: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
-  expectCard: { backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, marginTop: SPACING.lg, ...SHADOWS.sm },
+
+  // ── Expect & Reminders ──
+  expectCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    marginTop: SPACING.lg,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
+  },
   expectTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.md },
   expectItem: { flexDirection: 'row', alignItems: 'center', gap: SPACING.sm, marginBottom: SPACING.sm },
-  expectItemIcon: { fontSize: 18 },
+  expectIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: COLORS.surfaceTinted,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expectItemIcon: { fontSize: 16 },
   expectItemText: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary },
-  reminderCard: { backgroundColor: COLORS.cardAmber, borderRadius: BORDER_RADIUS.xl, padding: SPACING.lg, marginTop: SPACING.md, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)' },
+  reminderCard: {
+    backgroundColor: COLORS.cardAmber,
+    borderRadius: BORDER_RADIUS.xl,
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.borderAccent,
+  },
   reminderTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary, marginBottom: SPACING.sm },
   reminderText: { fontSize: FONT_SIZES.md, color: COLORS.textSecondary, lineHeight: 24 },
   homeButton: { marginTop: SPACING.lg, paddingVertical: SPACING.md, alignItems: 'center' },

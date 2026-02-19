@@ -1,5 +1,6 @@
 // ============================================================
 // CrashGuide Texas - Home Screen
+// Premium, reassuring design
 // ============================================================
 
 import React from 'react';
@@ -29,13 +30,20 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Dark Hero Section */}
+        {/* ── Dark Hero Section ── */}
         <View style={styles.heroContainer}>
+          {/* Decorative orb in background */}
+          <View style={styles.heroOrb} />
+          <View style={styles.heroOrbSmall} />
+
           <SafeAreaView>
             <View style={styles.heroInner}>
               {/* Logo */}
               <View style={styles.logoRow}>
-                <View style={styles.logoAccent} />
+                <View style={styles.logoMark}>
+                  <View style={styles.logoBar} />
+                  <View style={styles.logoBarThin} />
+                </View>
                 <View>
                   <Text style={styles.logo}>CrashGuide</Text>
                   <Text style={styles.logoSub}>TEXAS</Text>
@@ -47,7 +55,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 Were you just{'\n'}in an accident?
               </Text>
               <Text style={styles.heroSubtext}>
-                Let's get you through this, step by step.
+                Stay calm. We'll guide you through{'\n'}every step, right now.
               </Text>
 
               {/* Primary CTA - Emergency */}
@@ -56,6 +64,7 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                 activeOpacity={0.85}
                 onPress={() => navigation.navigate('Chat', { mode: 'urgent' })}
               >
+                <View style={styles.primaryCTAGlow} />
                 <View style={styles.primaryCTAInner}>
                   <View style={styles.primaryCTAIconWrap}>
                     <Text style={styles.primaryCTAEmoji}>🆘</Text>
@@ -66,39 +75,46 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                       Step-by-step guidance for what to do right now
                     </Text>
                   </View>
-                  <Text style={styles.primaryCTAArrow}>›</Text>
+                  <View style={styles.primaryCTAArrowWrap}>
+                    <Text style={styles.primaryCTAArrow}>›</Text>
+                  </View>
                 </View>
               </TouchableOpacity>
             </View>
           </SafeAreaView>
+
+          {/* Curved transition */}
+          <View style={styles.heroBottomCurve} />
         </View>
 
-        {/* Content Section - Light Background */}
+        {/* ── Content Section ── */}
         <View style={styles.contentSection}>
-          {/* Secondary CTAs */}
-          <View style={styles.secondaryCTARow}>
+          {/* Action Cards */}
+          <View style={styles.actionCardsRow}>
             <TouchableOpacity
-              style={styles.secondaryCTA}
+              style={styles.actionCard}
               activeOpacity={0.7}
               onPress={() => navigation.navigate('Document')}
             >
-              <View style={[styles.secondaryCTAIconWrap, { backgroundColor: COLORS.cardBlue }]}>
-                <Text style={styles.secondaryCTAEmoji}>📷</Text>
+              <View style={[styles.actionCardIconWrap, { backgroundColor: COLORS.infoBg }]}>
+                <Text style={styles.actionCardEmoji}>📷</Text>
               </View>
-              <Text style={styles.secondaryCTATitle}>Document</Text>
-              <Text style={styles.secondaryCTASubtext}>the Accident</Text>
+              <Text style={styles.actionCardTitle}>Document</Text>
+              <Text style={styles.actionCardSubtext}>Evidence & Photos</Text>
+              <View style={[styles.actionCardAccent, { backgroundColor: COLORS.info }]} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.secondaryCTA}
+              style={styles.actionCard}
               activeOpacity={0.7}
               onPress={() => navigation.navigate('Checklist')}
             >
-              <View style={[styles.secondaryCTAIconWrap, { backgroundColor: COLORS.cardAmber }]}>
-                <Text style={styles.secondaryCTAEmoji}>📋</Text>
+              <View style={[styles.actionCardIconWrap, { backgroundColor: COLORS.accentSubtle }]}>
+                <Text style={styles.actionCardEmoji}>📋</Text>
               </View>
-              <Text style={styles.secondaryCTATitle}>Accident</Text>
-              <Text style={styles.secondaryCTASubtext}>Checklist</Text>
+              <Text style={styles.actionCardTitle}>Checklist</Text>
+              <Text style={styles.actionCardSubtext}>What to Do Next</Text>
+              <View style={[styles.actionCardAccent, { backgroundColor: COLORS.accent }]} />
             </TouchableOpacity>
           </View>
 
@@ -108,51 +124,51 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
             activeOpacity={0.7}
             onPress={() => navigation.navigate('ConnectLawyer', {})}
           >
-            <View style={styles.lawyerCTALeft}>
+            <View style={styles.lawyerCTADecor} />
+            <View style={styles.lawyerCTABody}>
               <View style={styles.lawyerIconWrap}>
                 <Text style={styles.lawyerCTAEmoji}>⚖️</Text>
               </View>
+              <View style={styles.lawyerCTATextContainer}>
+                <Text style={styles.lawyerCTATitle}>Talk to a Texas Injury Lawyer</Text>
+                <Text style={styles.lawyerCTASubtext}>
+                  Free consultation · No obligation
+                </Text>
+              </View>
+              <View style={styles.lawyerArrowWrap}>
+                <Text style={styles.lawyerCTAArrow}>›</Text>
+              </View>
             </View>
-            <View style={styles.lawyerCTATextContainer}>
-              <Text style={styles.lawyerCTATitle}>Talk to a Texas Injury Lawyer</Text>
-              <Text style={styles.lawyerCTASubtext}>
-                Free consultation · No obligation
-              </Text>
-            </View>
-            <Text style={styles.lawyerCTAArrow}>›</Text>
           </TouchableOpacity>
 
           {/* Trust Signals */}
           <View style={styles.trustSection}>
             <View style={styles.trustRow}>
-              <View style={styles.trustItem}>
-                <View style={styles.trustIconWrap}>
-                  <Text style={styles.trustIcon}>🔒</Text>
-                </View>
-                <Text style={styles.trustText}>Private &{'\n'}Secure</Text>
-              </View>
-              <View style={styles.trustDivider} />
-              <View style={styles.trustItem}>
-                <View style={styles.trustIconWrap}>
-                  <Text style={styles.trustIcon}>🏛️</Text>
-                </View>
-                <Text style={styles.trustText}>Built for{'\n'}Texas</Text>
-              </View>
-              <View style={styles.trustDivider} />
-              <View style={styles.trustItem}>
-                <View style={styles.trustIconWrap}>
-                  <Text style={styles.trustIcon}>⭐</Text>
-                </View>
-                <Text style={styles.trustText}>100%{'\n'}Free</Text>
-              </View>
+              {[
+                { icon: '🔒', label: 'Private &\nSecure' },
+                { icon: '🏛️', label: 'Built for\nTexas' },
+                { icon: '⭐', label: '100%\nFree' },
+              ].map((item, i) => (
+                <React.Fragment key={i}>
+                  {i > 0 && <View style={styles.trustDivider} />}
+                  <View style={styles.trustItem}>
+                    <View style={styles.trustIconWrap}>
+                      <Text style={styles.trustIcon}>{item.icon}</Text>
+                    </View>
+                    <Text style={styles.trustText}>{item.label}</Text>
+                  </View>
+                </React.Fragment>
+              ))}
             </View>
           </View>
 
           {/* Disclaimer */}
           <View style={styles.disclaimerWrap}>
-            <Text style={styles.disclaimerText}>
-              General info only — not legal advice
-            </Text>
+            <View style={styles.disclaimerPill}>
+              <Text style={styles.disclaimerText}>
+                General info only — not legal advice
+              </Text>
+            </View>
           </View>
 
           {/* Privacy Link */}
@@ -177,10 +193,29 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
 
-  // ── Hero Section (Dark) ──
+  // ── Hero Section ──
   heroContainer: {
     backgroundColor: COLORS.primary,
-    paddingBottom: SPACING.xl,
+    paddingBottom: SPACING.xxl,
+    overflow: 'hidden',
+  },
+  heroOrb: {
+    position: 'absolute',
+    top: -80,
+    right: -60,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(59, 130, 246, 0.06)',
+  },
+  heroOrbSmall: {
+    position: 'absolute',
+    bottom: 20,
+    left: -40,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
+    backgroundColor: 'rgba(245, 166, 35, 0.04)',
   },
   heroInner: {
     paddingHorizontal: SPACING.lg,
@@ -189,65 +224,79 @@ const styles = StyleSheet.create({
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
-    marginBottom: SPACING.xl,
+    gap: SPACING.sm + 2,
+    marginBottom: SPACING.xl + 4,
   },
-  logoAccent: {
+  logoMark: {
+    flexDirection: 'row',
+    gap: 3,
+  },
+  logoBar: {
     width: 4,
-    height: 36,
+    height: 38,
     backgroundColor: COLORS.accent,
     borderRadius: 2,
+  },
+  logoBarThin: {
+    width: 2,
+    height: 38,
+    backgroundColor: 'rgba(245, 166, 35, 0.3)',
+    borderRadius: 1,
   },
   logo: {
     fontSize: FONT_SIZES.xxl,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnDark,
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   logoSub: {
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.heavy,
     color: COLORS.accent,
     letterSpacing: 6,
-    marginTop: -2,
+    marginTop: -1,
   },
   heroText: {
     fontSize: FONT_SIZES.display,
     fontWeight: FONT_WEIGHTS.heavy,
     color: COLORS.textOnDark,
-    lineHeight: 42,
-    marginBottom: SPACING.sm,
+    lineHeight: 46,
+    marginBottom: SPACING.sm + 2,
   },
   heroSubtext: {
     fontSize: FONT_SIZES.lg,
     color: COLORS.textOnDarkMuted,
-    lineHeight: 24,
+    lineHeight: 26,
     marginBottom: SPACING.xl,
   },
 
   // ── Primary CTA ──
   primaryCTA: {
-    backgroundColor: COLORS.emergency,
     borderRadius: BORDER_RADIUS.xl,
-    ...SHADOWS.lg,
+    overflow: 'hidden',
+    ...SHADOWS.glow(COLORS.emergency, 0.35),
+  },
+  primaryCTAGlow: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.emergency,
   },
   primaryCTAInner: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.md + 2,
     paddingHorizontal: SPACING.md,
     gap: SPACING.md,
   },
   primaryCTAIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: BORDER_RADIUS.md,
+    width: 52,
+    height: 52,
+    borderRadius: BORDER_RADIUS.lg,
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryCTAEmoji: {
-    fontSize: 24,
+    fontSize: 26,
   },
   primaryCTAContent: {
     flex: 1,
@@ -256,86 +305,131 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.xl,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnPrimary,
+    letterSpacing: 0.3,
   },
   primaryCTASubtext: {
     fontSize: FONT_SIZES.sm,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginTop: 2,
+    color: 'rgba(255, 255, 255, 0.85)',
+    marginTop: 3,
+    lineHeight: 18,
+  },
+  primaryCTAArrowWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   primaryCTAArrow: {
-    fontSize: 28,
-    fontWeight: FONT_WEIGHTS.regular,
-    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 22,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.white,
+    marginTop: -1,
   },
 
-  // ── Content Section (Light) ──
+  // ── Hero Bottom Curve ──
+  heroBottomCurve: {
+    position: 'absolute',
+    bottom: -20,
+    left: 0,
+    right: 0,
+    height: 40,
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+
+  // ── Content Section ──
   contentSection: {
-    paddingTop: SPACING.lg,
+    paddingTop: SPACING.sm,
     paddingBottom: SPACING.xxl,
   },
 
-  // ── Secondary CTAs ──
-  secondaryCTARow: {
+  // ── Action Cards ──
+  actionCardsRow: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
     gap: SPACING.md,
   },
-  secondaryCTA: {
+  actionCard: {
     flex: 1,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.lg,
     paddingHorizontal: SPACING.md,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    overflow: 'hidden',
     ...SHADOWS.md,
   },
-  secondaryCTAIconWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: BORDER_RADIUS.lg,
+  actionCardIconWrap: {
+    width: 60,
+    height: 60,
+    borderRadius: BORDER_RADIUS.xl,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.sm + 2,
   },
-  secondaryCTAEmoji: {
+  actionCardEmoji: {
     fontSize: 28,
   },
-  secondaryCTATitle: {
-    fontSize: FONT_SIZES.md,
+  actionCardTitle: {
+    fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textPrimary,
   },
-  secondaryCTASubtext: {
+  actionCardSubtext: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
-    marginTop: 2,
+    marginTop: 3,
+  },
+  actionCardAccent: {
+    position: 'absolute',
+    bottom: 0,
+    left: SPACING.xl,
+    right: SPACING.xl,
+    height: 3,
+    borderTopLeftRadius: 2,
+    borderTopRightRadius: 2,
   },
 
   // ── Lawyer CTA ──
   lawyerCTA: {
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.lg,
-    backgroundColor: COLORS.primary,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
+    overflow: 'hidden',
+    backgroundColor: COLORS.primary,
     ...SHADOWS.lg,
   },
-  lawyerCTALeft: {
-    marginRight: SPACING.md,
+  lawyerCTADecor: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: 4,
+    height: '100%',
+    backgroundColor: COLORS.accent,
+  },
+  lawyerCTABody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md + 2,
+    paddingHorizontal: SPACING.md + 4,
+    gap: SPACING.md,
   },
   lawyerIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.accentGlow,
     justifyContent: 'center',
     alignItems: 'center',
   },
   lawyerCTAEmoji: {
-    fontSize: 22,
+    fontSize: 24,
   },
   lawyerCTATextContainer: {
     flex: 1,
@@ -348,12 +442,21 @@ const styles = StyleSheet.create({
   lawyerCTASubtext: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textOnDarkMuted,
-    marginTop: 2,
+    marginTop: 3,
+  },
+  lawyerArrowWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.glass,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   lawyerCTAArrow: {
-    fontSize: 24,
+    fontSize: 18,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnDarkMuted,
-    marginLeft: SPACING.sm,
+    marginTop: -1,
   },
 
   // ── Trust Signals ──
@@ -364,7 +467,9 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     paddingVertical: SPACING.lg,
     paddingHorizontal: SPACING.md,
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
   },
   trustRow: {
     flexDirection: 'row',
@@ -376,13 +481,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   trustIconWrap: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.borderLight,
+    backgroundColor: COLORS.surfaceTinted,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   trustIcon: {
     fontSize: 18,
@@ -396,8 +503,8 @@ const styles = StyleSheet.create({
   },
   trustDivider: {
     width: 1,
-    height: 40,
-    backgroundColor: COLORS.border,
+    height: 44,
+    backgroundColor: COLORS.borderLight,
   },
 
   // ── Bottom ──
@@ -406,14 +513,17 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
     paddingHorizontal: SPACING.lg,
   },
+  disclaimerPill: {
+    backgroundColor: COLORS.surfaceTinted,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+  },
   disclaimerText: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
-    backgroundColor: COLORS.borderLight,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.full,
-    overflow: 'hidden',
   },
   privacyLink: {
     alignItems: 'center',

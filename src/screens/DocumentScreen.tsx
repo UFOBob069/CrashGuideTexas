@@ -104,6 +104,7 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Instructions */}
         <View style={styles.instructions}>
+          <View style={styles.instructionAccent} />
           <View style={styles.instructionIconWrap}>
             <Text style={styles.instructionIcon}>📷</Text>
           </View>
@@ -144,8 +145,8 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
                   {et.label}
                 </Text>
                 {count > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{count}</Text>
+                  <View style={[styles.badge, isSelected && styles.badgeSelected]}>
+                    <Text style={[styles.badgeText, isSelected && styles.badgeTextSelected]}>{count}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -230,7 +231,9 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
               { icon: '👥', text: 'Witness info' },
             ].map((reminder, idx) => (
               <View key={idx} style={styles.reminderItem}>
-                <Text style={styles.reminderIcon}>{reminder.icon}</Text>
+                <View style={styles.reminderIconWrap}>
+                  <Text style={styles.reminderIcon}>{reminder.icon}</Text>
+                </View>
                 <Text style={styles.reminderText}>{reminder.text}</Text>
               </View>
             ))}
@@ -245,7 +248,9 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
           <Text style={styles.continueButtonText}>
             Continue to Accident Details
           </Text>
-          <Text style={styles.continueArrow}>›</Text>
+          <View style={styles.continueArrowWrap}>
+            <Text style={styles.continueArrow}>›</Text>
+          </View>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -268,7 +273,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: COLORS.glass,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -297,6 +302,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.accent,
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.glow(COLORS.accent, 0.3),
   },
   evidenceBadgeText: {
     fontSize: FONT_SIZES.sm,
@@ -306,21 +312,35 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: SPACING.xxl,
   },
+
+  // ── Instructions ──
   instructions: {
     flexDirection: 'row',
     padding: SPACING.lg,
     backgroundColor: COLORS.surface,
     gap: SPACING.md,
     alignItems: 'center',
-    ...SHADOWS.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
+    overflow: 'hidden',
+  },
+  instructionAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    backgroundColor: COLORS.info,
   },
   instructionIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: BORDER_RADIUS.md,
+    width: 50,
+    height: 50,
+    borderRadius: BORDER_RADIUS.lg,
     backgroundColor: COLORS.cardBlue,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(59, 130, 246, 0.12)',
   },
   instructionIcon: {
     fontSize: 24,
@@ -332,13 +352,15 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textPrimary,
-    marginBottom: 2,
+    marginBottom: 3,
   },
   instructionBody: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
     lineHeight: 20,
   },
+
+  // ── Type Selector ──
   sectionTitle: {
     fontSize: FONT_SIZES.md,
     fontWeight: FONT_WEIGHTS.bold,
@@ -356,15 +378,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.full,
-    gap: SPACING.xs,
+    gap: SPACING.xs + 2,
     marginRight: SPACING.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     ...SHADOWS.sm,
   },
   typeChipSelected: {
     backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   typeChipIcon: {
     fontSize: 16,
@@ -385,11 +410,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  badgeSelected: {
+    backgroundColor: COLORS.glassLight,
+  },
   badgeText: {
     fontSize: FONT_SIZES.xs,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.white,
   },
+  badgeTextSelected: {
+    color: COLORS.textOnPrimary,
+  },
+
+  // ── Capture ──
   captureRow: {
     flexDirection: 'row',
     paddingHorizontal: SPACING.lg,
@@ -402,7 +435,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     paddingVertical: SPACING.lg,
     alignItems: 'center',
-    ...SHADOWS.md,
+    ...SHADOWS.lg,
   },
   captureButtonSecondary: {
     flex: 1,
@@ -410,21 +443,23 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     paddingVertical: SPACING.lg,
     alignItems: 'center',
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
   },
   captureIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: BORDER_RADIUS.md,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.glassLight,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.sm,
   },
   captureIconWrapSecondary: {
-    width: 44,
-    height: 44,
-    borderRadius: BORDER_RADIUS.md,
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.lg,
     backgroundColor: COLORS.cardBlue,
     justifyContent: 'center',
     alignItems: 'center',
@@ -443,6 +478,8 @@ const styles = StyleSheet.create({
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textPrimary,
   },
+
+  // ── Gallery ──
   gallery: {
     marginTop: SPACING.md,
   },
@@ -466,6 +503,8 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.md,
     overflow: 'hidden',
     backgroundColor: COLORS.border,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
     ...SHADOWS.sm,
   },
   evidenceImage: {
@@ -497,13 +536,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: SPACING.sm,
   },
+
+  // ── Reminders ──
   reminders: {
     marginTop: SPACING.md,
     marginHorizontal: SPACING.lg,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
     padding: SPACING.lg,
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
   },
   remindersTitle: {
     fontSize: FONT_SIZES.md,
@@ -519,38 +562,58 @@ const styles = StyleSheet.create({
   reminderItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: SPACING.sm,
     width: '48%',
-    paddingVertical: SPACING.xs,
+    paddingVertical: SPACING.xs + 2,
+  },
+  reminderIconWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: COLORS.surfaceTinted,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   reminderIcon: {
-    fontSize: 16,
+    fontSize: 14,
   },
   reminderText: {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textSecondary,
     flex: 1,
   },
+
+  // ── Continue ──
   continueButton: {
     marginHorizontal: SPACING.lg,
     marginTop: SPACING.lg,
     backgroundColor: COLORS.accent,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.md + 2,
     paddingHorizontal: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.md,
+    gap: SPACING.sm,
+    ...SHADOWS.glow(COLORS.accent, 0.25),
   },
   continueButtonText: {
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnAccent,
   },
+  continueArrowWrap: {
+    width: 24,
+    height: 24,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   continueArrow: {
-    fontSize: 24,
+    fontSize: 18,
+    fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnAccent,
-    marginLeft: SPACING.sm,
+    marginTop: -1,
   },
 });

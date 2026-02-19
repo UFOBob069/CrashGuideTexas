@@ -67,17 +67,21 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
       {/* Progress Section */}
       <View style={styles.progressSection}>
         <View style={styles.progressTop}>
-          <Text style={styles.progressLabel}>Progress</Text>
-          <Text style={styles.progressPercent}>{progressPercent}%</Text>
+          <View>
+            <Text style={styles.progressLabel}>Your Progress</Text>
+            <Text style={styles.progressSubtext}>
+              {completedCount} of {totalCount} tasks done
+            </Text>
+          </View>
+          <View style={styles.progressBadge}>
+            <Text style={styles.progressPercent}>{progressPercent}%</Text>
+          </View>
         </View>
         <View style={styles.progressBar}>
           <View
             style={[styles.progressFill, { width: `${progressPercent}%` }]}
           />
         </View>
-        <Text style={styles.progressText}>
-          {completedCount} of {totalCount} tasks completed
-        </Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -89,8 +93,9 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
 
           return (
             <View key={category} style={styles.categorySection}>
-              <View style={[styles.categoryHeader, { backgroundColor: info.bg }]}>
-                <View style={[styles.categoryIconWrap, { backgroundColor: info.color }]}>
+              <View style={styles.categoryHeader}>
+                <View style={[styles.categoryAccentBar, { backgroundColor: info.color }]} />
+                <View style={[styles.categoryIconWrap, { backgroundColor: info.bg }]}>
                   <Text style={styles.categoryIcon}>{info.icon}</Text>
                 </View>
                 <Text style={styles.categoryTitle}>{info.title}</Text>
@@ -194,7 +199,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: BORDER_RADIUS.full,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: COLORS.glass,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -216,30 +221,47 @@ const styles = StyleSheet.create({
   headerSpacer: {
     width: 36,
   },
+
+  // ── Progress ──
   progressSection: {
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.lg,
     backgroundColor: COLORS.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.borderLight,
     ...SHADOWS.sm,
   },
   progressTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   progressLabel: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.textPrimary,
+  },
+  progressSubtext: {
     fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.textSecondary,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+  progressBadge: {
+    backgroundColor: progressPercent === 100 ? COLORS.successBg : COLORS.surfaceTinted,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
   },
   progressPercent: {
     fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
+    fontWeight: FONT_WEIGHTS.heavy,
     color: COLORS.success,
   },
   progressBar: {
-    height: 8,
+    height: 6,
     backgroundColor: COLORS.borderLight,
     borderRadius: BORDER_RADIUS.full,
     overflow: 'hidden',
@@ -249,11 +271,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.success,
     borderRadius: BORDER_RADIUS.full,
   },
-  progressText: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textMuted,
-    marginTop: SPACING.sm,
-  },
+
+  // ── Categories ──
   scrollContent: {
     paddingBottom: SPACING.xxl,
     paddingTop: SPACING.md,
@@ -266,16 +285,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
+    backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.lg,
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     gap: SPACING.sm,
+    borderWidth: 1,
+    borderBottomWidth: 0,
+    borderColor: COLORS.borderLight,
+    overflow: 'hidden',
+  },
+  categoryAccentBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
   },
   categoryIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: BORDER_RADIUS.sm,
+    width: 34,
+    height: 34,
+    borderRadius: BORDER_RADIUS.md,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -291,8 +322,8 @@ const styles = StyleSheet.create({
   categoryBadge: {
     backgroundColor: COLORS.borderLight,
     borderRadius: BORDER_RADIUS.full,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: 3,
   },
   categoryBadgeDone: {
     backgroundColor: COLORS.successBg,
@@ -311,6 +342,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 0,
     borderTopRightRadius: 0,
     overflow: 'hidden',
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: COLORS.borderLight,
     ...SHADOWS.sm,
   },
   checklistItem: {
@@ -367,6 +401,8 @@ const styles = StyleSheet.create({
   checklistDescCompleted: {
     color: COLORS.textMuted,
   },
+
+  // ── Bottom Actions ──
   bottomActions: {
     paddingHorizontal: SPACING.md,
     paddingTop: SPACING.lg,
@@ -375,12 +411,12 @@ const styles = StyleSheet.create({
   actionButton: {
     backgroundColor: COLORS.emergency,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.md + 2,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.sm,
-    ...SHADOWS.md,
+    ...SHADOWS.glow(COLORS.emergency, 0.25),
   },
   actionButtonIcon: {
     fontSize: 18,
@@ -393,12 +429,14 @@ const styles = StyleSheet.create({
   actionButtonSecondary: {
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.md + 2,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: SPACING.sm,
-    ...SHADOWS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
   },
   actionButtonTextSecondary: {
     fontSize: FONT_SIZES.lg,
