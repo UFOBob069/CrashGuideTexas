@@ -26,7 +26,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1B3A5C"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.crashguidetexas.app",
       "permissions": [
         "CAMERA",
