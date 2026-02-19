@@ -13,6 +13,7 @@ import {
   SafeAreaView,
   Alert,
   Linking,
+  Platform,
 } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
@@ -66,10 +67,20 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
   }
 
   function handleCallLawyer() {
-    Linking.openURL(`tel:${ramosJames.phone.replace(/[^0-9]/g, '')}`);
+    const tel = `tel:${ramosJames.phone.replace(/[^0-9]/g, '')}`;
+    if (Platform.OS === 'web') {
+      window.open(tel, '_self');
+    } else {
+      Linking.openURL(tel);
+    }
   }
   function handleTextLawyer() {
-    Linking.openURL(`sms:${ramosJames.phone.replace(/[^0-9]/g, '')}`);
+    const sms = `sms:${ramosJames.phone.replace(/[^0-9]/g, '')}`;
+    if (Platform.OS === 'web') {
+      window.open(sms, '_self');
+    } else {
+      Linking.openURL(sms);
+    }
   }
 
   return (

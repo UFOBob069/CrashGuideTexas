@@ -113,7 +113,11 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   function handleQuickAction(action: string) {
     switch (action) {
       case 'call_911':
-        Linking.openURL('tel:911');
+        if (Platform.OS === 'web') {
+          window.open('tel:911', '_self');
+        } else {
+          Linking.openURL('tel:911');
+        }
         break;
       case 'take_photo':
         navigation.navigate('Document');

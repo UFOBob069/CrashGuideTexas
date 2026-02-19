@@ -3,7 +3,8 @@
 // ============================================================
 
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { Platform } from 'react-native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 
@@ -17,9 +18,28 @@ import PrivacyScreen from '../screens/PrivacyScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+// Web linking config so "/" maps to the Home screen
+const linking: LinkingOptions<RootStackParamList> | undefined =
+  Platform.OS === 'web'
+    ? {
+        prefixes: ['/'],
+        config: {
+          screens: {
+            Home: '',
+            Chat: 'chat',
+            Document: 'document',
+            Checklist: 'checklist',
+            ConnectLawyer: 'connect',
+            ContactForm: 'contact',
+            Privacy: 'privacy',
+          },
+        },
+      }
+    : undefined;
+
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
+    <NavigationContainer linking={linking}>
       <Stack.Navigator
         initialRouteName="Home"
         screenOptions={{
