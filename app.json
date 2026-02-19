@@ -37,7 +37,14 @@
       ]
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "output": "single",
+      "name": "CrashGuide Texas",
+      "shortName": "CrashGuide",
+      "description": "Your calm, step-by-step guide after an accident — built for Texans",
+      "themeColor": "#1B3A5C",
+      "backgroundColor": "#1B3A5C"
     },
     "plugins": [
       "expo-camera",
