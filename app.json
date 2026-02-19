@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "CrashGuide Texas",
+    "slug": "CrashGuideTexas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1B3A5C"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.crashguidetexas.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "CrashGuide Texas needs camera access to document accident evidence.",
+        "NSPhotoLibraryUsageDescription": "CrashGuide Texas needs photo library access to attach accident photos.",
+        "NSLocationWhenInUseUsageDescription": "CrashGuide Texas uses your location to tag accident evidence with GPS coordinates."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1B3A5C"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.crashguidetexas.app",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-image-picker",
+      "expo-location"
+    ]
+  }
+}
