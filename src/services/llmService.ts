@@ -8,12 +8,17 @@
 import { ChatMessage, ChatMode, AccidentReport } from '../types';
 import { SYSTEM_PROMPTS, EXTRACTION_PROMPT } from '../constants/prompts';
 
-// Configuration - replace with your actual API endpoint and key
+// Configuration - supports OpenAI-compatible APIs (Kimi/Moonshot, OpenAI, etc.) and Anthropic
 const LLM_CONFIG = {
-  apiUrl: process.env.EXPO_PUBLIC_LLM_API_URL || 'https://api.anthropic.com/v1/messages',
+  apiUrl: process.env.EXPO_PUBLIC_LLM_API_URL || 'https://api.moonshot.cn/v1/chat/completions',
   apiKey: process.env.EXPO_PUBLIC_LLM_API_KEY || '',
-  model: 'claude-sonnet-4-5-20250929',
+  model: process.env.EXPO_PUBLIC_LLM_MODEL || 'moonshot-v1-8k',
   maxTokens: 1024,
+  // Auto-detect provider based on URL
+  get provider(): 'openai-compatible' | 'anthropic' {
+    if (this.apiUrl.includes('anthropic.com')) return 'anthropic';
+    return 'openai-compatible'; // Kimi, OpenAI, and other compatible APIs
+  },
 };
 
 interface LLMResponse {
@@ -33,24 +38,44 @@ export async function sendChatMessage(
   }
 
   try {
-    const response = await fetch(LLM_CONFIG.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': LLM_CONFIG.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
+    const isAnthropic = LLM_CONFIG.provider === 'anthropic';
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    let body: string;
+
+    if (isAnthropic) {
+      headers['x-api-key'] = LLM_CONFIG.apiKey;
+      headers['anthropic-version'] = '2023-06-01';
+      body = JSON.stringify({
         model: LLM_CONFIG.model,
         max_tokens: LLM_CONFIG.maxTokens,
         system: systemPrompt,
         messages: messages
           .filter((m) => m.role !== 'system')
-          .map((m) => ({
-            role: m.role,
-            content: m.content,
-          })),
-      }),
+          .map((m) => ({ role: m.role, content: m.content })),
+      });
+    } else {
+      // OpenAI-compatible format (Kimi/Moonshot, OpenAI, etc.)
+      headers['Authorization'] = `Bearer ${LLM_CONFIG.apiKey}`;
+      body = JSON.stringify({
+        model: LLM_CONFIG.model,
+        max_tokens: LLM_CONFIG.maxTokens,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+            .filter((m) => m.role !== 'system')
+            .map((m) => ({ role: m.role, content: m.content })),
+        ],
+      });
+    }
+
+    const response = await fetch(LLM_CONFIG.apiUrl, {
+      method: 'POST',
+      headers,
+      body,
     });
 
     if (!response.ok) {
@@ -58,9 +83,13 @@ export async function sendChatMessage(
     }
 
     const data = await response.json();
-    const content = data.content?.[0]?.text || 'I apologize, but I had trouble responding. Could you try again?';
 
-    return { content };
+    // Parse response based on provider format
+    const content = isAnthropic
+      ? data.content?.[0]?.text
+      : data.choices?.[0]?.message?.content;
+
+    return { content: content || 'I apologize, but I had trouble responding. Could you try again?' };
   } catch (error) {
     console.error('LLM API error:', error);
     return generateLocalResponse(messages, mode);
@@ -79,24 +108,39 @@ export async function extractReportData(
       .map((m) => `${m.role}: ${m.content}`)
       .join('\n');
 
-    const response = await fetch(LLM_CONFIG.apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': LLM_CONFIG.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
+    const isAnthropic = LLM_CONFIG.provider === 'anthropic';
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+
+    let body: string;
+
+    if (isAnthropic) {
+      headers['x-api-key'] = LLM_CONFIG.apiKey;
+      headers['anthropic-version'] = '2023-06-01';
+      body = JSON.stringify({
         model: LLM_CONFIG.model,
         max_tokens: 512,
         system: EXTRACTION_PROMPT,
+        messages: [{ role: 'user', content: conversationText }],
+      });
+    } else {
+      headers['Authorization'] = `Bearer ${LLM_CONFIG.apiKey}`;
+      body = JSON.stringify({
+        model: LLM_CONFIG.model,
+        max_tokens: 512,
         messages: [
-          {
-            role: 'user',
-            content: conversationText,
-          },
+          { role: 'system', content: EXTRACTION_PROMPT },
+          { role: 'user', content: conversationText },
         ],
-      }),
+      });
+    }
+
+    const response = await fetch(LLM_CONFIG.apiUrl, {
+      method: 'POST',
+      headers,
+      body,
     });
 
     if (!response.ok) {
@@ -104,7 +148,9 @@ export async function extractReportData(
     }
 
     const data = await response.json();
-    const text = data.content?.[0]?.text || '{}';
+    const text = isAnthropic
+      ? data.content?.[0]?.text || '{}'
+      : data.choices?.[0]?.message?.content || '{}';
     return JSON.parse(text);
   } catch (error) {
     console.error('Extraction error:', error);
