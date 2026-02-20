@@ -2,11 +2,68 @@
 // CrashGuide Texas - Main App Entry Point
 // ============================================================
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider } from './src/context/AppContext';
 import AppNavigator from './src/navigation/AppNavigator';
+
+// Inject desktop phone-frame styles on web
+function useDesktopAppFrame() {
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const style = document.createElement('style');
+    style.id = 'desktop-app-frame';
+    style.textContent = `
+      @media (min-width: 481px) {
+        html, body {
+          background: #0f172a;
+          background-image:
+            radial-gradient(ellipse at 20% 50%, rgba(30, 64, 175, 0.25) 0%, transparent 60%),
+            radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+        }
+        #root {
+          max-width: 430px;
+          margin: 0 auto;
+          height: 100%;
+          border-left: 1px solid rgba(255,255,255,0.08);
+          border-right: 1px solid rgba(255,255,255,0.08);
+          box-shadow:
+            0 0 80px rgba(30, 64, 175, 0.3),
+            0 0 0 1px rgba(255,255,255,0.05);
+          overflow: hidden;
+          position: relative;
+        }
+      }
+      @media (min-width: 600px) {
+        #root {
+          margin-top: 24px;
+          margin-bottom: 24px;
+          height: calc(100% - 48px);
+          border-radius: 32px;
+          border: 1px solid rgba(255,255,255,0.1);
+        }
+        /* Subtle phone notch indicator */
+        #root::before {
+          content: '';
+          position: absolute;
+          top: 8px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 120px;
+          height: 5px;
+          background: rgba(255,255,255,0.12);
+          border-radius: 3px;
+          z-index: 9999;
+          pointer-events: none;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    return () => { style.remove(); };
+  }, []);
+}
 
 // Error Boundary to catch and display runtime errors (prevents blank screen)
 class ErrorBoundary extends React.Component<
@@ -53,6 +110,8 @@ const errorStyles = StyleSheet.create({
 });
 
 export default function App() {
+  useDesktopAppFrame();
+
   return (
     <ErrorBoundary>
       <AppProvider>
