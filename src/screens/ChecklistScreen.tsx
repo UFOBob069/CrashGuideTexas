@@ -73,7 +73,7 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
               {completedCount} of {totalCount} tasks done
             </Text>
           </View>
-          <View style={styles.progressBadge}>
+          <View style={[styles.progressBadge, progressPercent === 100 && styles.progressBadgeDone]}>
             <Text style={styles.progressPercent}>{progressPercent}%</Text>
           </View>
         </View>
@@ -248,12 +248,15 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   progressBadge: {
-    backgroundColor: progressPercent === 100 ? COLORS.successBg : COLORS.surfaceTinted,
+    backgroundColor: COLORS.surfaceTinted,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.xs + 2,
     borderRadius: BORDER_RADIUS.full,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
+  },
+  progressBadgeDone: {
+    backgroundColor: COLORS.successBg,
   },
   progressPercent: {
     fontSize: FONT_SIZES.lg,
