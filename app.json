@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1B3A5C"
+      "backgroundColor": "#1E40AF"
     },
     "ios": {
       "supportsTablet": true,
@@ -24,7 +24,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1B3A5C"
+        "backgroundColor": "#1E40AF"
       },
       "package": "com.crashguidetexas.app",
       "permissions": [
@@ -42,8 +42,8 @@
       "name": "CrashGuide Texas",
       "shortName": "CrashGuide",
       "description": "Your calm, step-by-step guide after an accident — built for Texans",
-      "themeColor": "#1B3A5C",
-      "backgroundColor": "#1B3A5C"
+      "themeColor": "#1E40AF",
+      "backgroundColor": "#1E40AF"
     },
     "plugins": [
       "expo-camera",

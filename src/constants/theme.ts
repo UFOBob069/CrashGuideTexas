@@ -4,12 +4,12 @@
 // ============================================================
 
 export const COLORS = {
-  // Primary palette - rich deep blues with more range
-  primary: '#0B1A2F',
-  primaryLight: '#162D50',
-  primaryMid: '#112240',
-  primaryDark: '#070F1D',
-  primarySoft: '#1E3A5F',
+  // Primary palette - friendly, approachable blues
+  primary: '#1E40AF',
+  primaryLight: '#2563EB',
+  primaryMid: '#1D4ED8',
+  primaryDark: '#1E3A8A',
+  primarySoft: '#3B82F6',
 
   // Accent - warm amber/gold with glow
   accent: '#F5A623',
@@ -67,9 +67,9 @@ export const COLORS = {
   cardPurple: 'rgba(139, 92, 246, 0.07)',
 
   // Glassmorphism helpers
-  glass: 'rgba(255, 255, 255, 0.08)',
-  glassLight: 'rgba(255, 255, 255, 0.12)',
-  glassBorder: 'rgba(255, 255, 255, 0.15)',
+  glass: 'rgba(255, 255, 255, 0.15)',
+  glassLight: 'rgba(255, 255, 255, 0.22)',
+  glassBorder: 'rgba(255, 255, 255, 0.25)',
 } as const;
 
 export const SPACING = {
