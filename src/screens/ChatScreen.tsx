@@ -439,6 +439,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginBottom: SPACING.md,
     maxWidth: '85%',
+    flexShrink: 1,
   },
   userBubble: {
     alignSelf: 'flex-end',
@@ -467,6 +468,7 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.xl,
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm + 2,
+    flexShrink: 1,
   },
   userBubbleContent: {
     backgroundColor: COLORS.primary,
