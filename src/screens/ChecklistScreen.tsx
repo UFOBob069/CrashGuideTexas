@@ -2,19 +2,22 @@
 // CrashGuide Texas - Accident Checklist Screen
 // ============================================================
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, ChecklistCategory } from '../types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { useApp } from '../context/AppContext';
+import { exportReportAsPdf } from '../services/reportService';
 
 type ChecklistScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Checklist'>;
@@ -39,6 +42,18 @@ const CATEGORY_ORDER: ChecklistCategory[] = [
 export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
   const { state, dispatch } = useApp();
   const { checklist } = state;
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportPdf() {
+    setExporting(true);
+    try {
+      await exportReportAsPdf(state.report);
+    } catch {
+      Alert.alert('Error', 'Could not generate the report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  }
 
   const completedCount = checklist.filter((i) => i.isCompleted).length;
   const totalCount = checklist.length;
@@ -176,6 +191,20 @@ export default function ChecklistScreen({ navigation }: ChecklistScreenProps) {
             <Text style={styles.actionButtonTextSecondary}>
               Document Accident
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.exportButton}
+            onPress={handleExportPdf}
+            disabled={exporting}
+          >
+            {exporting ? (
+              <ActivityIndicator color={COLORS.textOnPrimary} size="small" />
+            ) : (
+              <>
+                <Text style={styles.actionButtonIcon}>📄</Text>
+                <Text style={styles.exportButtonText}>Export PDF Report</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -445,5 +474,20 @@ const styles = StyleSheet.create({
     fontSize: FONT_SIZES.lg,
     fontWeight: FONT_WEIGHTS.semibold,
     color: COLORS.textPrimary,
+  },
+  exportButton: {
+    backgroundColor: COLORS.primary,
+    borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.md + 2,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.sm,
+    ...SHADOWS.md,
+  },
+  exportButtonText: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textOnPrimary,
   },
 });

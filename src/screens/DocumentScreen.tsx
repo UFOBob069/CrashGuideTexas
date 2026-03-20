@@ -1,5 +1,6 @@
 // ============================================================
 // CrashGuide Texas - Document Mode Screen
+// Step-by-step accident documentation
 // ============================================================
 
 import React, { useState } from 'react';
@@ -10,9 +11,10 @@ import {
   TouchableOpacity,
   ScrollView,
   Image,
-  SafeAreaView,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList, EvidenceType, EvidenceItem } from '../types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../constants/theme';
@@ -36,51 +38,74 @@ const EVIDENCE_TYPES: { type: EvidenceType; icon: string; label: string }[] = [
   { type: 'other', icon: '📎', label: 'Other' },
 ];
 
+const SCENE_CHECKLIST = [
+  { id: 'damage', icon: '🚗', text: 'All vehicle damage photographed' },
+  { id: 'plates', icon: '🔢', text: 'License plates captured' },
+  { id: 'road', icon: '🛣️', text: 'Road conditions documented' },
+  { id: 'weather', icon: '⛈️', text: 'Weather conditions noted' },
+  { id: 'insurance', icon: '📝', text: 'Insurance cards photographed' },
+  { id: 'witnesses', icon: '👥', text: 'Witness contact info collected' },
+];
+
 export default function DocumentScreen({ navigation }: DocumentScreenProps) {
   const { state, dispatch } = useApp();
   const [selectedType, setSelectedType] = useState<EvidenceType>('vehicle_damage');
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [capturing, setCapturing] = useState<'camera' | 'library' | null>(null);
   const evidence = state.report.evidence;
+  const hasOtherDriver = !!state.report.otherDriverInfo;
 
   async function handleCapturePhoto() {
+    if (capturing) return;
+    setCapturing('camera');
     try {
       const item = await capturePhoto(selectedType, `${formatEvidenceTypeLabel(selectedType)} photo`);
       if (item) {
         dispatch({ type: 'ADD_EVIDENCE', payload: item });
-        Alert.alert(
-          'Photo Captured',
-          `${formatEvidenceTypeLabel(selectedType)} photo saved with ${item.location ? 'GPS location' : 'no GPS'} data.`,
-        );
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Could not capture photo. Please check camera permissions.');
+    } finally {
+      setCapturing(null);
     }
   }
 
   async function handlePickPhoto() {
+    if (capturing) return;
+    setCapturing('library');
     try {
       const item = await pickPhotoFromLibrary(selectedType, `${formatEvidenceTypeLabel(selectedType)} photo`);
       if (item) {
         dispatch({ type: 'ADD_EVIDENCE', payload: item });
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'Could not access photo library. Please check permissions.');
+    } finally {
+      setCapturing(null);
     }
   }
 
   function handleRemoveEvidence(id: string) {
-    Alert.alert('Remove Photo', 'Are you sure you want to remove this photo?', [
+    Alert.alert('Remove Photo', 'Remove this photo?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () => dispatch({ type: 'REMOVE_EVIDENCE', payload: id }),
-      },
+      { text: 'Remove', style: 'destructive', onPress: () => dispatch({ type: 'REMOVE_EVIDENCE', payload: id }) },
     ]);
+  }
+
+  function toggleChecked(id: string) {
+    setCheckedItems((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
   }
 
   function getEvidenceByType(type: EvidenceType): EvidenceItem[] {
     return evidence.filter((e) => e.type === type);
   }
+
+  const checkedCount = checkedItems.size;
+  const allChecked = checkedCount === SCENE_CHECKLIST.length;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -101,23 +126,46 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
         )}
       </View>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Instructions */}
-        <View style={styles.instructions}>
-          <View style={styles.instructionAccent} />
-          <View style={styles.instructionIconWrap}>
-            <Text style={styles.instructionIcon}>📷</Text>
-          </View>
-          <View style={styles.instructionText}>
-            <Text style={styles.instructionTitle}>Capture Evidence</Text>
-            <Text style={styles.instructionBody}>
-              Photos are tagged with time and GPS. Good documentation protects your rights.
-            </Text>
-          </View>
-        </View>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-        {/* Photo Type Selector */}
-        <Text style={styles.sectionTitle}>What are you photographing?</Text>
+        {/* ── Step 1: Other Driver Info ── */}
+        <StepHeader number={1} title="Other Driver Info" done={hasOtherDriver} />
+        <TouchableOpacity
+          style={[styles.otherDriverCard, hasOtherDriver && styles.otherDriverCardDone]}
+          onPress={() => navigation.navigate('OtherDriver')}
+          activeOpacity={0.75}
+        >
+          {hasOtherDriver && <View style={styles.stepDoneBar} />}
+          <View style={styles.otherDriverCardBody}>
+            <View style={[styles.otherDriverIconWrap, hasOtherDriver && styles.otherDriverIconDone]}>
+              <Text style={styles.otherDriverIconEmoji}>🚗</Text>
+            </View>
+            <View style={styles.otherDriverTextWrap}>
+              {hasOtherDriver ? (
+                <>
+                  <Text style={styles.otherDriverName}>
+                    {state.report.otherDriverInfo!.name || 'Other driver saved'}
+                  </Text>
+                  <Text style={styles.otherDriverMeta}>
+                    {[state.report.otherDriverInfo!.licensePlate, state.report.otherDriverInfo!.insuranceCompany]
+                      .filter(Boolean).join(' · ') || 'Tap to edit'}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.otherDriverTitle}>Record other driver details</Text>
+                  <Text style={styles.otherDriverSubtext}>Name, plate, insurance — needed for your claim</Text>
+                </>
+              )}
+            </View>
+            <Text style={styles.otherDriverArrow}>›</Text>
+          </View>
+        </TouchableOpacity>
+
+        {/* ── Step 2: Take Photos ── */}
+        <StepHeader number={2} title="Photograph the Scene" done={evidence.length > 0} />
+
+        {/* Type selector */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -129,19 +177,11 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
             return (
               <TouchableOpacity
                 key={et.type}
-                style={[
-                  styles.typeChip,
-                  isSelected && styles.typeChipSelected,
-                ]}
+                style={[styles.typeChip, isSelected && styles.typeChipSelected]}
                 onPress={() => setSelectedType(et.type)}
               >
                 <Text style={styles.typeChipIcon}>{et.icon}</Text>
-                <Text
-                  style={[
-                    styles.typeChipLabel,
-                    isSelected && styles.typeChipLabelSelected,
-                  ]}
-                >
+                <Text style={[styles.typeChipLabel, isSelected && styles.typeChipLabelSelected]}>
                   {et.label}
                 </Text>
                 {count > 0 && (
@@ -154,28 +194,47 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
           })}
         </ScrollView>
 
-        {/* Capture Buttons */}
+        {/* Capture buttons */}
         <View style={styles.captureRow}>
-          <TouchableOpacity style={styles.captureButton} onPress={handleCapturePhoto}>
-            <View style={styles.captureIconWrap}>
-              <Text style={styles.captureIcon}>📸</Text>
-            </View>
-            <Text style={styles.captureLabel}>Take Photo</Text>
+          <TouchableOpacity
+            style={[styles.captureButton, capturing === 'camera' && styles.captureButtonBusy]}
+            onPress={handleCapturePhoto}
+            disabled={!!capturing}
+          >
+            {capturing === 'camera' ? (
+              <>
+                <ActivityIndicator color={COLORS.white} size="small" />
+                <Text style={styles.captureLabel}>Adding GPS tag…</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.captureIcon}>📸</Text>
+                <Text style={styles.captureLabel}>Take Photo</Text>
+              </>
+            )}
           </TouchableOpacity>
-          <TouchableOpacity style={styles.captureButtonSecondary} onPress={handlePickPhoto}>
-            <View style={styles.captureIconWrapSecondary}>
-              <Text style={styles.captureIcon}>🖼️</Text>
-            </View>
-            <Text style={styles.captureLabelSecondary}>From Library</Text>
+          <TouchableOpacity
+            style={[styles.captureButtonSecondary, capturing === 'library' && styles.captureButtonSecondaryBusy]}
+            onPress={handlePickPhoto}
+            disabled={!!capturing}
+          >
+            {capturing === 'library' ? (
+              <>
+                <ActivityIndicator color={COLORS.primary} size="small" />
+                <Text style={styles.captureLabelSecondary}>Adding GPS tag…</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.captureIcon}>🖼️</Text>
+                <Text style={styles.captureLabelSecondary}>From Library</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
-        {/* Evidence Gallery */}
+        {/* Evidence gallery */}
         {evidence.length > 0 && (
           <View style={styles.gallery}>
-            <Text style={styles.sectionTitle}>
-              Captured Evidence ({evidence.length})
-            </Text>
             {EVIDENCE_TYPES.map((et) => {
               const items = getEvidenceByType(et.type);
               if (items.length === 0) return null;
@@ -187,433 +246,325 @@ export default function DocumentScreen({ navigation }: DocumentScreenProps) {
                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                     <View style={styles.evidenceRow}>
                       {items.map((item) => (
-                        <TouchableOpacity
-                          key={item.id}
-                          style={styles.evidenceThumb}
-                          onLongPress={() => handleRemoveEvidence(item.id)}
-                        >
-                          <Image
-                            source={{ uri: item.uri }}
-                            style={styles.evidenceImage}
-                          />
+                        <View key={item.id} style={styles.evidenceThumb}>
+                          <Image source={{ uri: item.uri }} style={styles.evidenceImage} />
                           {item.location && (
                             <View style={styles.gpsTag}>
-                              <Text style={styles.gpsTagText}>📍 GPS</Text>
+                              <Text style={styles.gpsTagText}>📍</Text>
                             </View>
                           )}
                           <Text style={styles.evidenceTime}>
-                            {item.timestamp.toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
+                            {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </Text>
-                        </TouchableOpacity>
+                          {/* X remove button */}
+                          <TouchableOpacity
+                            style={styles.removeButton}
+                            onPress={() => handleRemoveEvidence(item.id)}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                          >
+                            <Text style={styles.removeButtonText}>✕</Text>
+                          </TouchableOpacity>
+                        </View>
                       ))}
                     </View>
                   </ScrollView>
                 </View>
               );
             })}
-            <Text style={styles.hintText}>Long-press a photo to remove it</Text>
           </View>
         )}
 
-        {/* Reminders */}
-        <View style={styles.reminders}>
-          <Text style={styles.remindersTitle}>Don't forget to capture:</Text>
-          <View style={styles.reminderGrid}>
-            {[
-              { icon: '🚗', text: 'All vehicle damage' },
-              { icon: '🔢', text: 'License plates' },
-              { icon: '🛣️', text: 'Road conditions' },
-              { icon: '⛈️', text: 'Weather conditions' },
-              { icon: '📝', text: 'Insurance cards' },
-              { icon: '👥', text: 'Witness info' },
-            ].map((reminder, idx) => (
-              <View key={idx} style={styles.reminderItem}>
-                <View style={styles.reminderIconWrap}>
-                  <Text style={styles.reminderIcon}>{reminder.icon}</Text>
+        {/* ── Step 3: Scene Checklist ── */}
+        <StepHeader
+          number={3}
+          title="Scene Checklist"
+          done={allChecked}
+          badge={`${checkedCount}/${SCENE_CHECKLIST.length}`}
+        />
+        <View style={styles.checklistCard}>
+          {SCENE_CHECKLIST.map((item, idx) => {
+            const checked = checkedItems.has(item.id);
+            const isLast = idx === SCENE_CHECKLIST.length - 1;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.checklistRow, checked && styles.checklistRowChecked, isLast && styles.checklistRowLast]}
+                onPress={() => toggleChecked(item.id)}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+                  {checked && <Text style={styles.checkmark}>✓</Text>}
                 </View>
-                <Text style={styles.reminderText}>{reminder.text}</Text>
-              </View>
-            ))}
-          </View>
+                <Text style={styles.checklistIcon}>{item.icon}</Text>
+                <Text style={[styles.checklistText, checked && styles.checklistTextChecked]}>
+                  {item.text}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* Continue */}
+        {/* ── Step 4: Tell Us What Happened ── */}
+        <StepHeader number={4} title="Tell Us What Happened" />
         <TouchableOpacity
-          style={styles.continueButton}
+          style={styles.intakeButton}
           onPress={() => navigation.navigate('Chat', { mode: 'intake' })}
+          activeOpacity={0.85}
         >
-          <Text style={styles.continueButtonText}>
-            Continue to Accident Details
-          </Text>
-          <View style={styles.continueArrowWrap}>
-            <Text style={styles.continueArrow}>›</Text>
+          <View style={styles.intakeButtonGlow} />
+          <View style={styles.intakeButtonInner}>
+            <View style={styles.intakeIconWrap}>
+              <Text style={styles.intakeIcon}>💬</Text>
+            </View>
+            <View style={styles.intakeTextWrap}>
+              <Text style={styles.intakeTitle}>Describe the Accident</Text>
+              <Text style={styles.intakeSubtext}>
+                Answer a few questions — we'll build your incident summary
+              </Text>
+            </View>
+            <View style={styles.intakeArrowWrap}>
+              <Text style={styles.intakeArrow}>›</Text>
+            </View>
           </View>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  header: {
+// ── Step header component ─────────────────────────────────
+
+function StepHeader({
+  number, title, done = false, badge,
+}: {
+  number: number; title: string; done?: boolean; badge?: string;
+}) {
+  return (
+    <View style={stepStyles.row}>
+      <View style={[stepStyles.numberBadge, done && stepStyles.numberBadgeDone]}>
+        {done
+          ? <Text style={stepStyles.checkIcon}>✓</Text>
+          : <Text style={stepStyles.numberText}>{number}</Text>
+        }
+      </View>
+      <Text style={stepStyles.title}>{title}</Text>
+      {badge && !done && (
+        <View style={stepStyles.badge}>
+          <Text style={stepStyles.badgeText}>{badge}</Text>
+        </View>
+      )}
+      {done && <Text style={stepStyles.doneText}>Done</Text>}
+    </View>
+  );
+}
+
+const stepStyles = StyleSheet.create({
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingTop: SPACING.xl,
+    paddingBottom: SPACING.sm,
+    gap: SPACING.sm,
+  },
+  numberBadge: {
+    width: 26, height: 26, borderRadius: 13,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center', alignItems: 'center',
+  },
+  numberBadgeDone: { backgroundColor: COLORS.success },
+  numberText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.white },
+  checkIcon: { fontSize: 13, color: COLORS.white, fontWeight: FONT_WEIGHTS.bold },
+  title: { flex: 1, fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary },
+  badge: {
+    backgroundColor: COLORS.borderLight,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  badgeText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, fontWeight: FONT_WEIGHTS.semibold },
+  doneText: { fontSize: FONT_SIZES.xs, color: COLORS.success, fontWeight: FONT_WEIGHTS.semibold },
+});
+
+// ── Styles ────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  scrollContent: { paddingBottom: SPACING.xxl },
+
+  // Header
+  header: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
     backgroundColor: COLORS.primaryLight,
   },
   backButton: {
-    width: 36,
-    height: 36,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.glass,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 36, height: 36, borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.glass, justifyContent: 'center', alignItems: 'center',
   },
-  backArrow: {
-    color: COLORS.textOnPrimary,
-    fontSize: 22,
-    fontWeight: FONT_WEIGHTS.bold,
-    marginTop: -2,
-  },
-  headerContent: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textOnPrimary,
-  },
-  headerSpacer: {
-    width: 36,
-  },
+  backArrow: { color: COLORS.textOnPrimary, fontSize: 22, fontWeight: FONT_WEIGHTS.bold, marginTop: -2 },
+  headerContent: { flex: 1, alignItems: 'center' },
+  headerTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
+  headerSpacer: { width: 36 },
   evidenceBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: COLORS.accent,
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 28, height: 28, borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.accent, justifyContent: 'center', alignItems: 'center',
     ...SHADOWS.glow(COLORS.accent, 0.3),
   },
-  evidenceBadgeText: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.white,
-  },
-  scrollContent: {
-    paddingBottom: SPACING.xxl,
-  },
+  evidenceBadgeText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.bold, color: COLORS.white },
 
-  // ── Instructions ──
-  instructions: {
-    flexDirection: 'row',
-    padding: SPACING.lg,
+  // Step 1 — Other Driver
+  otherDriverCard: {
+    marginHorizontal: SPACING.lg,
     backgroundColor: COLORS.surface,
-    gap: SPACING.md,
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.borderLight,
-    overflow: 'hidden',
-  },
-  instructionAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    backgroundColor: COLORS.info,
-  },
-  instructionIconWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.cardBlue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.12)',
-  },
-  instructionIcon: {
-    fontSize: 24,
-  },
-  instructionText: {
-    flex: 1,
-  },
-  instructionTitle: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: 3,
-  },
-  instructionBody: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    lineHeight: 20,
-  },
-
-  // ── Type Selector ──
-  sectionTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textPrimary,
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
-    paddingBottom: SPACING.sm,
-  },
-  typeSelector: {
-    paddingHorizontal: SPACING.md,
-    gap: SPACING.sm,
-    paddingBottom: SPACING.sm,
-  },
-  typeChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm + 2,
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.full,
-    gap: SPACING.xs + 2,
-    marginRight: SPACING.sm,
+    borderRadius: BORDER_RADIUS.xl,
     borderWidth: 1,
     borderColor: COLORS.borderLight,
+    overflow: 'hidden',
     ...SHADOWS.sm,
   },
-  typeChipSelected: {
-    backgroundColor: COLORS.primary,
-    borderColor: COLORS.primary,
+  otherDriverCardDone: { borderColor: COLORS.success },
+  stepDoneBar: { height: 3, backgroundColor: COLORS.success },
+  otherDriverCardBody: {
+    flexDirection: 'row', alignItems: 'center',
+    padding: SPACING.md, gap: SPACING.md,
   },
-  typeChipIcon: {
-    fontSize: 16,
+  otherDriverIconWrap: {
+    width: 48, height: 48, borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.cardBlue, justifyContent: 'center', alignItems: 'center',
   },
-  typeChipLabel: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.textPrimary,
-  },
-  typeChipLabelSelected: {
-    color: COLORS.textOnPrimary,
-  },
-  badge: {
-    backgroundColor: COLORS.accent,
-    borderRadius: BORDER_RADIUS.full,
-    width: 20,
-    height: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  badgeSelected: {
-    backgroundColor: COLORS.glassLight,
-  },
-  badgeText: {
-    fontSize: FONT_SIZES.xs,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.white,
-  },
-  badgeTextSelected: {
-    color: COLORS.textOnPrimary,
-  },
+  otherDriverIconDone: { backgroundColor: COLORS.successBg },
+  otherDriverIconEmoji: { fontSize: 22 },
+  otherDriverTextWrap: { flex: 1 },
+  otherDriverName: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary },
+  otherDriverMeta: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 2 },
+  otherDriverTitle: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary },
+  otherDriverSubtext: { fontSize: FONT_SIZES.sm, color: COLORS.textSecondary, marginTop: 2 },
+  otherDriverArrow: { fontSize: 22, color: COLORS.textMuted, fontWeight: FONT_WEIGHTS.bold },
 
-  // ── Capture ──
-  captureRow: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.lg,
-    gap: SPACING.md,
-    paddingTop: SPACING.md,
+  // Step 2 — Photos
+  typeSelector: { paddingHorizontal: SPACING.md, gap: SPACING.sm, paddingBottom: SPACING.sm },
+  typeChip: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm + 2,
+    backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.full,
+    gap: SPACING.xs + 2, marginRight: SPACING.sm,
+    borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.sm,
   },
+  typeChipSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  typeChipIcon: { fontSize: 16 },
+  typeChipLabel: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.textPrimary },
+  typeChipLabelSelected: { color: COLORS.textOnPrimary },
+  badge: {
+    backgroundColor: COLORS.accent, borderRadius: BORDER_RADIUS.full,
+    width: 20, height: 20, justifyContent: 'center', alignItems: 'center',
+  },
+  badgeSelected: { backgroundColor: COLORS.glassLight },
+  badgeText: { fontSize: FONT_SIZES.xs, fontWeight: FONT_WEIGHTS.bold, color: COLORS.white },
+  badgeTextSelected: { color: COLORS.textOnPrimary },
+
+  captureRow: { flexDirection: 'row', paddingHorizontal: SPACING.lg, gap: SPACING.md, paddingTop: SPACING.sm },
   captureButton: {
-    flex: 1,
-    backgroundColor: COLORS.primary,
-    borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.lg,
-    alignItems: 'center',
-    ...SHADOWS.lg,
+    flex: 1, backgroundColor: COLORS.primary, borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.lg, alignItems: 'center', ...SHADOWS.lg,
   },
   captureButtonSecondary: {
-    flex: 1,
-    backgroundColor: COLORS.surface,
-    borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.lg,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    ...SHADOWS.soft,
+    flex: 1, backgroundColor: COLORS.surface, borderRadius: BORDER_RADIUS.xl,
+    paddingVertical: SPACING.lg, alignItems: 'center',
+    borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.soft,
   },
-  captureIconWrap: {
-    width: 48,
-    height: 48,
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.glassLight,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  captureIconWrapSecondary: {
-    width: 48,
-    height: 48,
-    borderRadius: BORDER_RADIUS.lg,
-    backgroundColor: COLORS.cardBlue,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.sm,
-  },
-  captureIcon: {
-    fontSize: 22,
-  },
-  captureLabel: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textOnPrimary,
-  },
-  captureLabelSecondary: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textPrimary,
-  },
+  captureButtonBusy: { opacity: 0.75 },
+  captureButtonSecondaryBusy: { opacity: 0.6 },
+  captureIcon: { fontSize: 24, marginBottom: SPACING.xs },
+  captureLabel: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
+  captureLabelSecondary: { fontSize: FONT_SIZES.md, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textPrimary },
 
-  // ── Gallery ──
-  gallery: {
-    marginTop: SPACING.md,
-  },
-  evidenceSection: {
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
-  },
+  gallery: { marginTop: SPACING.md },
+  evidenceSection: { paddingHorizontal: SPACING.lg, marginBottom: SPACING.md },
   evidenceSectionTitle: {
-    fontSize: FONT_SIZES.sm,
-    fontWeight: FONT_WEIGHTS.semibold,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.sm,
+    fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textSecondary, marginBottom: SPACING.sm,
   },
-  evidenceRow: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
+  evidenceRow: { flexDirection: 'row', gap: SPACING.sm },
   evidenceThumb: {
-    width: 100,
-    height: 120,
-    borderRadius: BORDER_RADIUS.md,
-    overflow: 'hidden',
-    backgroundColor: COLORS.border,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    width: 100, height: 120, borderRadius: BORDER_RADIUS.md,
+    overflow: 'visible', backgroundColor: COLORS.border,
+    borderWidth: 1, borderColor: COLORS.borderLight, ...SHADOWS.sm,
+  },
+  evidenceImage: { width: 100, height: 85, borderRadius: BORDER_RADIUS.md },
+  gpsTag: {
+    position: 'absolute', top: 4, left: 4,
+    backgroundColor: 'rgba(0,0,0,0.55)', borderRadius: BORDER_RADIUS.sm,
+    paddingHorizontal: 4, paddingVertical: 2,
+  },
+  gpsTagText: { fontSize: 10 },
+  evidenceTime: {
+    fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, textAlign: 'center', paddingVertical: 4,
+  },
+  removeButton: {
+    position: 'absolute', top: -8, right: -8,
+    width: 22, height: 22, borderRadius: 11,
+    backgroundColor: COLORS.emergency,
+    justifyContent: 'center', alignItems: 'center',
     ...SHADOWS.sm,
   },
-  evidenceImage: {
-    width: '100%',
-    height: 85,
-  },
-  gpsTag: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: BORDER_RADIUS.sm,
-    paddingHorizontal: 4,
-    paddingVertical: 2,
-  },
-  gpsTagText: {
-    fontSize: 9,
-    color: COLORS.white,
-  },
-  evidenceTime: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    paddingVertical: 4,
-  },
-  hintText: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    paddingVertical: SPACING.sm,
-  },
+  removeButtonText: { fontSize: 10, color: COLORS.white, fontWeight: FONT_WEIGHTS.bold },
 
-  // ── Reminders ──
-  reminders: {
-    marginTop: SPACING.md,
+  // Step 3 — Checklist
+  checklistCard: {
     marginHorizontal: SPACING.lg,
     backgroundColor: COLORS.surface,
     borderRadius: BORDER_RADIUS.xl,
-    padding: SPACING.lg,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-    ...SHADOWS.soft,
+    borderWidth: 1, borderColor: COLORS.borderLight,
+    overflow: 'hidden', ...SHADOWS.sm,
   },
-  remindersTitle: {
-    fontSize: FONT_SIZES.md,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textPrimary,
-    marginBottom: SPACING.md,
-  },
-  reminderGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+  checklistRow: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: SPACING.md, paddingVertical: SPACING.md,
     gap: SPACING.sm,
+    borderBottomWidth: 1, borderBottomColor: COLORS.borderLight,
   },
-  reminderItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    width: '48%',
-    paddingVertical: SPACING.xs + 2,
+  checklistRowChecked: { backgroundColor: COLORS.successBg },
+  checklistRowLast: { borderBottomWidth: 0 },
+  checkbox: {
+    width: 24, height: 24, borderRadius: BORDER_RADIUS.full,
+    borderWidth: 2, borderColor: COLORS.border,
+    justifyContent: 'center', alignItems: 'center',
   },
-  reminderIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: BORDER_RADIUS.sm,
-    backgroundColor: COLORS.surfaceTinted,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reminderIcon: {
-    fontSize: 14,
-  },
-  reminderText: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textSecondary,
-    flex: 1,
-  },
+  checkboxChecked: { backgroundColor: COLORS.success, borderColor: COLORS.success },
+  checkmark: { color: COLORS.white, fontSize: 13, fontWeight: FONT_WEIGHTS.bold },
+  checklistIcon: { fontSize: 16 },
+  checklistText: { flex: 1, fontSize: FONT_SIZES.md, color: COLORS.textPrimary },
+  checklistTextChecked: { textDecorationLine: 'line-through', color: COLORS.textMuted },
 
-  // ── Continue ──
-  continueButton: {
+  // Step 4 — Intake CTA
+  intakeButton: {
     marginHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
-    backgroundColor: COLORS.accent,
     borderRadius: BORDER_RADIUS.xl,
-    paddingVertical: SPACING.md + 2,
-    paddingHorizontal: SPACING.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: SPACING.sm,
-    ...SHADOWS.glow(COLORS.accent, 0.25),
+    overflow: 'hidden',
+    ...SHADOWS.glow(COLORS.primary, 0.2),
   },
-  continueButtonText: {
-    fontSize: FONT_SIZES.lg,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textOnAccent,
+  intakeButtonGlow: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.primary,
   },
-  continueArrowWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: BORDER_RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+  intakeButtonInner: {
+    flexDirection: 'row', alignItems: 'center',
+    paddingVertical: SPACING.md + 2, paddingHorizontal: SPACING.md, gap: SPACING.md,
   },
-  continueArrow: {
-    fontSize: 18,
-    fontWeight: FONT_WEIGHTS.bold,
-    color: COLORS.textOnAccent,
-    marginTop: -1,
+  intakeIconWrap: {
+    width: 48, height: 48, borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.glassLight,
+    justifyContent: 'center', alignItems: 'center',
   },
+  intakeIcon: { fontSize: 24 },
+  intakeTextWrap: { flex: 1 },
+  intakeTitle: { fontSize: FONT_SIZES.lg, fontWeight: FONT_WEIGHTS.bold, color: COLORS.textOnPrimary },
+  intakeSubtext: { fontSize: FONT_SIZES.sm, color: 'rgba(255,255,255,0.75)', marginTop: 3, lineHeight: 18 },
+  intakeArrowWrap: {
+    width: 32, height: 32, borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.glassLight, justifyContent: 'center', alignItems: 'center',
+  },
+  intakeArrow: { fontSize: 22, color: COLORS.white, fontWeight: FONT_WEIGHTS.bold, marginTop: -1 },
 });

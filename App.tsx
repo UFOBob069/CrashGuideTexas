@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, Platform, ScrollView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { AppProvider } from './src/context/AppContext';
+import { AuthProvider } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
 
 // Inject desktop phone-frame styles on web
@@ -115,8 +116,10 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AppProvider>
-        <StatusBar style="light" />
-        <AppNavigator />
+        <AuthProvider>
+          <StatusBar style="light" />
+          <AppNavigator />
+        </AuthProvider>
       </AppProvider>
     </ErrorBoundary>
   );

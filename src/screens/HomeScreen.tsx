@@ -3,19 +3,25 @@
 // Premium, reassuring design
 // ============================================================
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
+  ActivityIndicator,
+  Alert,
   Dimensions,
+  Animated,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../constants/theme';
+import { exportReportAsPdf } from '../services/reportService';
+import { useApp } from '../context/AppContext';
+import { useAuth } from '../context/AuthContext';
 
 type HomeScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -23,7 +29,42 @@ type HomeScreenProps = {
 
 const { width } = Dimensions.get('window');
 
+function formatReportDate(date: Date): string {
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  if (isToday) {
+    return `Today · ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function HomeScreen({ navigation }: HomeScreenProps) {
+  const { state, dispatch } = useApp();
+  const { user, logOut } = useAuth();
+  const [exporting, setExporting] = useState(false);
+  const [newReportFlash, setNewReportFlash] = useState(false);
+
+  function handleNewReport() {
+    dispatch({ type: 'NEW_ACCIDENT' });
+    setNewReportFlash(true);
+    setTimeout(() => setNewReportFlash(false), 2000);
+  }
+
+  const evidenceCount = state.report.evidence.length;
+  const hasContent = evidenceCount > 0 || !!state.report.incidentDescription || !!state.report.otherDriverInfo;
+  const isSavedReport = !!state.currentAccidentId;
+
+  async function handleExportPdf() {
+    setExporting(true);
+    try {
+      await exportReportAsPdf(state.report);
+    } catch {
+      Alert.alert('Error', 'Could not generate the report. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -44,10 +85,47 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
                   <View style={styles.logoBar} />
                   <View style={styles.logoBarThin} />
                 </View>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.logo}>CrashGuide</Text>
                   <Text style={styles.logoSub}>TEXAS</Text>
                 </View>
+                {state.isSaving && (
+                  <View style={styles.savingBadge}>
+                    <ActivityIndicator size="small" color={COLORS.accent} />
+                    <Text style={styles.savingText}>Saving…</Text>
+                  </View>
+                )}
+                <TouchableOpacity
+                  style={styles.myReportsButton}
+                  onPress={() => navigation.navigate('Accidents')}
+                >
+                  <Text style={styles.myReportsText}>My Reports</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Active report row: status chip + new report button */}
+              <View style={styles.reportRow}>
+                <View style={styles.reportStatus}>
+                  <View style={[styles.reportStatusDot, isSavedReport && styles.reportStatusDotSaved]} />
+                  <Text style={styles.reportStatusText}>
+                    {formatReportDate(state.report.createdAt)}
+                  </Text>
+                  {evidenceCount > 0 && (
+                    <View style={styles.reportStatusBadge}>
+                      <Text style={styles.reportStatusBadgeText}>📷 {evidenceCount}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.newReportChip, newReportFlash && styles.newReportChipFlash]}
+                  onPress={handleNewReport}
+                  disabled={newReportFlash}
+                >
+                  <Text style={[styles.newReportChipText, newReportFlash && styles.newReportChipTextFlash]}>
+                    {newReportFlash ? '✓ Started' : '+ New report'}
+                  </Text>
+                </TouchableOpacity>
               </View>
 
               {/* Hero Text */}
@@ -66,9 +144,6 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               >
                 <View style={styles.primaryCTAGlow} />
                 <View style={styles.primaryCTAInner}>
-                  <View style={styles.primaryCTAIconWrap}>
-                    <Text style={styles.primaryCTAEmoji}>🆘</Text>
-                  </View>
                   <View style={styles.primaryCTAContent}>
                     <Text style={styles.primaryCTAText}>Get Help Now</Text>
                     <Text style={styles.primaryCTASubtext}>
@@ -137,6 +212,32 @@ export default function HomeScreen({ navigation }: HomeScreenProps) {
               </View>
               <View style={styles.lawyerArrowWrap}>
                 <Text style={styles.lawyerCTAArrow}>›</Text>
+              </View>
+            </View>
+          </TouchableOpacity>
+
+          {/* Export Report */}
+          <TouchableOpacity
+            style={styles.exportCTA}
+            activeOpacity={0.7}
+            onPress={handleExportPdf}
+            disabled={exporting}
+          >
+            <View style={styles.exportCTABody}>
+              <View style={styles.exportIconWrap}>
+                {exporting
+                  ? <ActivityIndicator color={COLORS.info} size="small" />
+                  : <Text style={styles.exportCTAEmoji}>📄</Text>
+                }
+              </View>
+              <View style={styles.exportCTATextContainer}>
+                <Text style={styles.exportCTATitle}>Export Accident Report</Text>
+                <Text style={styles.exportCTASubtext}>
+                  PDF summary · Share with insurance
+                </Text>
+              </View>
+              <View style={styles.exportArrowWrap}>
+                <Text style={styles.exportCTAArrow}>›</Text>
               </View>
             </View>
           </TouchableOpacity>
@@ -226,6 +327,96 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: SPACING.sm + 2,
     marginBottom: SPACING.xl + 4,
+  },
+  savingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginRight: SPACING.sm,
+  },
+  savingText: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.accent,
+    fontWeight: FONT_WEIGHTS.semibold,
+  },
+  myReportsButton: {
+    backgroundColor: COLORS.glassLight,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+  },
+  myReportsText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textOnDark,
+  },
+  // ── Report row (chip + new button) ──
+  reportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  reportStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs + 2,
+    backgroundColor: COLORS.glassLight,
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    flexShrink: 1,
+  },
+  reportStatusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: COLORS.accent,
+    flexShrink: 0,
+  },
+  reportStatusDotSaved: {
+    backgroundColor: COLORS.success,
+  },
+  reportStatusText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: COLORS.textOnDark,
+  },
+  reportStatusBadge: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    paddingHorizontal: SPACING.xs + 2,
+    paddingVertical: 1,
+    borderRadius: BORDER_RADIUS.full,
+  },
+  reportStatusBadgeText: {
+    fontSize: FONT_SIZES.xs,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  newReportChip: {
+    paddingHorizontal: SPACING.sm + 2,
+    paddingVertical: SPACING.xs + 2,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    backgroundColor: COLORS.glass,
+    flexShrink: 0,
+  },
+  newReportChipFlash: {
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+  },
+  newReportChipText: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: FONT_WEIGHTS.semibold,
+    color: 'rgba(255,255,255,0.65)',
+  },
+  newReportChipTextFlash: {
+    color: COLORS.successLight,
   },
   logoMark: {
     flexDirection: 'row',
@@ -456,6 +647,59 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: FONT_WEIGHTS.bold,
     color: COLORS.textOnDarkMuted,
+    marginTop: -1,
+  },
+
+  // ── Export CTA ──
+  exportCTA: {
+    marginHorizontal: SPACING.lg,
+    marginTop: SPACING.md,
+    borderRadius: BORDER_RADIUS.xl,
+    overflow: 'hidden',
+    backgroundColor: COLORS.surface,
+    borderWidth: 1,
+    borderColor: COLORS.borderLight,
+    ...SHADOWS.soft,
+  },
+  exportCTABody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md + 4,
+    gap: SPACING.md,
+  },
+  exportIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: BORDER_RADIUS.lg,
+    backgroundColor: COLORS.cardBlue,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exportCTAEmoji: { fontSize: 22 },
+  exportCTATextContainer: { flex: 1 },
+  exportCTATitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.textPrimary,
+  },
+  exportCTASubtext: {
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  exportArrowWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: COLORS.surfaceTinted,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  exportCTAArrow: {
+    fontSize: 18,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.textMuted,
     marginTop: -1,
   },
 

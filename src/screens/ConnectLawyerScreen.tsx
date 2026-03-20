@@ -10,11 +10,11 @@ import {
   TouchableOpacity,
   ScrollView,
   TextInput,
-  SafeAreaView,
   Alert,
   Linking,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList, ContactInfo } from '../types';
@@ -115,6 +115,18 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {step === 'info' && (
           <View>
+            {/* ── Simple trust pills ── */}
+            <View style={styles.trustPillRow}>
+              <View style={styles.trustPill}>
+                <Text style={styles.trustPillIcon}>💰</Text>
+                <Text style={styles.trustPillText}>No Fee Until You Win</Text>
+              </View>
+              <View style={styles.trustPill}>
+                <Text style={styles.trustPillIcon}>⭐</Text>
+                <Text style={styles.trustPillText}>Top-Rated Lawyers Only</Text>
+              </View>
+            </View>
+
             <View style={styles.infoCard}>
               <View style={styles.infoIconWrap}><Text style={styles.infoIcon}>⚖️</Text></View>
               <Text style={styles.infoTitle}>Connect with a Texas{'\n'}Personal Injury Lawyer</Text>
@@ -128,6 +140,7 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
                 ))}
               </View>
             </View>
+
             <TouchableOpacity style={styles.primaryButton} onPress={handleContinueToContact}>
               <Text style={styles.primaryButtonText}>Get Connected — It's Free</Text>
             </TouchableOpacity>
@@ -212,6 +225,10 @@ export default function ConnectLawyerScreen({ navigation, route }: ConnectLawyer
               <Text style={styles.successText}>A Texas personal injury lawyer will be reaching out to you shortly.</Text>
               <View style={styles.firmCard}>
                 <Text style={styles.firmName}>{ramosJames.name}</Text>
+                <View style={styles.firmStarRow}>
+                  {[1,2,3,4,5].map((s) => <Text key={s} style={styles.starFirm}>★</Text>)}
+                  <Text style={styles.firmRatingText}>4.9 · 200+ reviews</Text>
+                </View>
                 <Text style={styles.firmPhone}>{ramosJames.phone}</Text>
               </View>
             </View>
@@ -304,6 +321,32 @@ const styles = StyleSheet.create({
   stepLineActive: { backgroundColor: COLORS.success },
 
   scrollContent: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
+
+  // ── Trust pills (info step) ──
+  trustPillRow: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.md,
+  },
+  trustPill: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: SPACING.xs + 2,
+    paddingVertical: SPACING.sm + 4,
+    backgroundColor: COLORS.successBg,
+    borderRadius: BORDER_RADIUS.full,
+    borderWidth: 1,
+    borderColor: 'rgba(16,185,129,0.15)',
+  },
+  trustPillIcon: { fontSize: 14 },
+  trustPillText: { fontSize: FONT_SIZES.sm, fontWeight: FONT_WEIGHTS.semibold, color: COLORS.successDark },
+
+  // ── Firm card stars (connected step) ──
+  firmStarRow: { flexDirection: 'row', alignItems: 'center', gap: 3, marginTop: 4, marginBottom: 2 },
+  starFirm: { fontSize: 14, color: '#F59E0B' },
+  firmRatingText: { fontSize: FONT_SIZES.xs, color: COLORS.textSecondary, marginLeft: 4 },
 
   // ── Info Card ──
   infoCard: {

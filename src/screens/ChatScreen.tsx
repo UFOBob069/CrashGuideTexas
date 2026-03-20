@@ -12,16 +12,19 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  SafeAreaView,
+  Animated,
   Linking,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import Markdown from 'react-native-markdown-display';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RouteProp } from '@react-navigation/native';
 import { randomUUID } from 'expo-crypto';
 import { RootStackParamList, ChatMessage, ChatMode } from '../types';
 import { COLORS, SPACING, FONT_SIZES, FONT_WEIGHTS, BORDER_RADIUS, SHADOWS } from '../constants/theme';
 import { useApp } from '../context/AppContext';
-import { sendChatMessage } from '../services/llmService';
+import { sendChatMessage, extractReportData } from '../services/llmService';
 
 type ChatScreenProps = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Chat'>;
@@ -40,7 +43,11 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   const { state, dispatch } = useApp();
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isFinalizing, setIsFinalizing] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
   const messages = state.chatMessages[mode];
   const modeInfo = MODE_HEADERS[mode];
 
@@ -49,6 +56,22 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
       sendInitialMessage();
     }
   }, []);
+
+  useEffect(() => {
+    if (!isTyping) return;
+    const pulse = (dot: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(dot, { toValue: 1, duration: 280, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 280, useNativeDriver: true }),
+          Animated.delay(560),
+        ]),
+      );
+    const anim = Animated.parallel([pulse(dot1, 0), pulse(dot2, 200), pulse(dot3, 400)]);
+    anim.start();
+    return () => anim.stop();
+  }, [isTyping]);
 
   async function sendInitialMessage() {
     setIsTyping(true);
@@ -110,6 +133,29 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
     }
   }
 
+  async function handleFinalize() {
+    if (isFinalizing || isTyping) return;
+    setIsFinalizing(true);
+    try {
+      const extracted = await extractReportData(messages);
+      const summary = messages
+        .filter((m) => m.role === 'user')
+        .map((m) => m.content)
+        .join(' ');
+      dispatch({
+        type: 'UPDATE_REPORT',
+        payload: { ...extracted, incidentDescription: summary },
+      });
+    } catch {
+      // non-fatal — still navigate
+    } finally {
+      setIsFinalizing(false);
+    }
+    navigation.navigate('ConnectLawyer', { report: state.report });
+  }
+
+  const userMessageCount = messages.filter((m) => m.role === 'user').length;
+
   function handleQuickAction(action: string) {
     switch (action) {
       case 'call_911':
@@ -158,14 +204,13 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
           styles.bubbleContent,
           isUser ? styles.userBubbleContent : styles.assistantBubbleContent,
         ]}>
-          <Text
-            style={[
-              styles.messageText,
-              isUser ? styles.userText : styles.assistantText,
-            ]}
-          >
-            {item.content}
-          </Text>
+          {isUser ? (
+            <Text style={[styles.messageText, styles.userText]}>
+              {item.content}
+            </Text>
+          ) : (
+            <Markdown style={markdownStyles}>{item.content}</Markdown>
+          )}
           <Text style={[styles.timestamp, isUser && styles.userTimestamp]}>
             {formatTime(item.timestamp)}
           </Text>
@@ -175,116 +220,115 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Mode Header */}
-      <View style={[styles.modeHeader, { backgroundColor: modeInfo.color }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-          <Text style={styles.backArrow}>‹</Text>
-        </TouchableOpacity>
-        <View style={styles.modeHeaderContent}>
-          <Text style={styles.modeIcon}>{modeInfo.icon}</Text>
-          <Text style={styles.modeTitle}>{modeInfo.title}</Text>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <SafeAreaView style={styles.safeArea}>
+        {/* Mode Header */}
+        <View style={[styles.modeHeader, { backgroundColor: modeInfo.color }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backArrow}>‹</Text>
+          </TouchableOpacity>
+          <View style={styles.modeHeaderContent}>
+            <Text style={styles.modeIcon}>{modeInfo.icon}</Text>
+            <Text style={styles.modeTitle}>{modeInfo.title}</Text>
+          </View>
+          <View style={styles.headerSpacer} />
         </View>
-        <View style={styles.headerSpacer} />
-      </View>
 
-      {/* Quick Actions */}
-      <View style={styles.quickActions}>
-        {mode === 'urgent' && (
-          <>
+        {/* Quick Actions — hidden for intake (no top buttons needed) */}
+        {mode !== 'intake' && (
+        <View style={styles.quickActions}>
+          {mode === 'urgent' && (
+            <>
+              <TouchableOpacity
+                style={[styles.quickAction, styles.emergencyAction]}
+                onPress={() => handleQuickAction('call_911')}
+              >
+                <Text style={styles.quickActionEmoji}>📞</Text>
+                <Text style={[styles.quickActionText, styles.emergencyActionText]}>Call 911</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => handleQuickAction('take_photo')}
+              >
+                <Text style={styles.quickActionEmoji}>📷</Text>
+                <Text style={styles.quickActionText}>Photos</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => handleQuickAction('checklist')}
+              >
+                <Text style={styles.quickActionEmoji}>📋</Text>
+                <Text style={styles.quickActionText}>Checklist</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {mode === 'document' && (
+            <>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => handleQuickAction('take_photo')}
+              >
+                <Text style={styles.quickActionEmoji}>📷</Text>
+                <Text style={styles.quickActionText}>Take Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.quickAction}
+                onPress={() => handleQuickAction('switch_intake')}
+              >
+                <Text style={styles.quickActionEmoji}>📝</Text>
+                <Text style={styles.quickActionText}>Start Intake</Text>
+              </TouchableOpacity>
+            </>
+          )}
+          {mode === 'connect' && (
             <TouchableOpacity
-              style={[styles.quickAction, styles.emergencyAction]}
-              onPress={() => handleQuickAction('call_911')}
+              style={[styles.quickAction, styles.connectAction]}
+              onPress={() => handleQuickAction('connect_lawyer')}
             >
               <Text style={styles.quickActionEmoji}>📞</Text>
-              <Text style={[styles.quickActionText, styles.emergencyActionText]}>Call 911</Text>
+              <Text style={[styles.quickActionText, styles.connectActionText]}>Call Now</Text>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => handleQuickAction('take_photo')}
-            >
-              <Text style={styles.quickActionEmoji}>📷</Text>
-              <Text style={styles.quickActionText}>Photos</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => handleQuickAction('checklist')}
-            >
-              <Text style={styles.quickActionEmoji}>📋</Text>
-              <Text style={styles.quickActionText}>Checklist</Text>
-            </TouchableOpacity>
-          </>
-        )}
-        {mode === 'document' && (
-          <>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => handleQuickAction('take_photo')}
-            >
-              <Text style={styles.quickActionEmoji}>📷</Text>
-              <Text style={styles.quickActionText}>Take Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickAction}
-              onPress={() => handleQuickAction('switch_intake')}
-            >
-              <Text style={styles.quickActionEmoji}>📝</Text>
-              <Text style={styles.quickActionText}>Start Intake</Text>
-            </TouchableOpacity>
-          </>
-        )}
-        {mode === 'intake' && (
-          <TouchableOpacity
-            style={[styles.quickAction, styles.connectAction]}
-            onPress={() => handleQuickAction('connect_lawyer')}
-          >
-            <Text style={styles.quickActionEmoji}>⚖️</Text>
-            <Text style={[styles.quickActionText, styles.connectActionText]}>Talk to a Lawyer</Text>
-          </TouchableOpacity>
-        )}
-        {mode === 'connect' && (
-          <TouchableOpacity
-            style={[styles.quickAction, styles.connectAction]}
-            onPress={() => handleQuickAction('connect_lawyer')}
-          >
-            <Text style={styles.quickActionEmoji}>📞</Text>
-            <Text style={[styles.quickActionText, styles.connectActionText]}>Call Now</Text>
-          </TouchableOpacity>
-        )}
-      </View>
-
-      {/* Messages */}
-      <FlatList
-        ref={flatListRef}
-        data={messages}
-        renderItem={renderMessage}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.messagesList}
-        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>Starting conversation...</Text>
-          </View>
-        }
-      />
-
-      {/* Typing Indicator */}
-      {isTyping && (
-        <View style={styles.typingIndicator}>
-          <View style={styles.typingDots}>
-            <View style={[styles.typingDot, { opacity: 0.4 }]} />
-            <View style={[styles.typingDot, { opacity: 0.6 }]} />
-            <View style={[styles.typingDot, { opacity: 0.9 }]} />
-          </View>
-          <Text style={styles.typingText}>CrashGuide is thinking...</Text>
+          )}
         </View>
-      )}
+        )}
 
-      {/* Input Area */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
+        {/* Messages */}
+        <FlatList
+          ref={flatListRef}
+          data={messages}
+          renderItem={renderMessage}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.messagesList}
+          onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>Starting conversation...</Text>
+            </View>
+          }
+        />
+
+        {/* Typing Indicator */}
+        {isTyping && (
+          <View style={styles.typingIndicator}>
+            <View style={styles.typingDots}>
+              {[dot1, dot2, dot3].map((dot, i) => (
+                <Animated.View
+                  key={i}
+                  style={[styles.typingDot, {
+                    opacity: dot,
+                    transform: [{ translateY: dot.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) }],
+                  }]}
+                />
+              ))}
+            </View>
+            <Text style={styles.typingText}>CrashGuide is thinking...</Text>
+          </View>
+        )}
+
+        {/* Input Area */}
         <View style={styles.inputContainer}>
           <View style={styles.inputWrapper}>
             <TextInput
@@ -317,10 +361,61 @@ export default function ChatScreen({ navigation, route }: ChatScreenProps) {
             General information only — not legal advice
           </Text>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+
+        {/* Finalize Banner — sits at the very bottom, intake only */}
+        {mode === 'intake' && userMessageCount >= 1 && (
+          <TouchableOpacity
+            style={[styles.finalizeBanner, isFinalizing && styles.finalizeBannerLoading]}
+            onPress={handleFinalize}
+            disabled={isFinalizing || isTyping}
+            activeOpacity={0.85}
+          >
+            {isFinalizing ? (
+              <>
+                <ActivityIndicator size="small" color={COLORS.white} />
+                <Text style={styles.finalizeBannerText}>Building your summary…</Text>
+              </>
+            ) : (
+              <>
+                <Text style={styles.finalizeBannerEmoji}>⚖️</Text>
+                <View style={styles.finalizeBannerBody}>
+                  <Text style={styles.finalizeBannerTitle}>Done? Connect with a Lawyer</Text>
+                  <Text style={styles.finalizeBannerSub}>Saves your summary and starts the consultation</Text>
+                </View>
+                <Text style={styles.finalizeBannerArrow}>›</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
+      </SafeAreaView>
+    </KeyboardAvoidingView>
   );
 }
+
+const markdownStyles = {
+  body: {
+    fontSize: 15,
+    lineHeight: 22,
+    color: COLORS.textPrimary,
+  },
+  strong: {
+    fontWeight: FONT_WEIGHTS.bold as any,
+    color: COLORS.textPrimary,
+  },
+  bullet_list: {
+    marginTop: 4,
+  },
+  ordered_list: {
+    marginTop: 4,
+  },
+  list_item: {
+    marginBottom: 4,
+  },
+  paragraph: {
+    marginTop: 0,
+    marginBottom: 6,
+  },
+};
 
 function getInitialGreeting(mode: ChatMode): string {
   switch (mode) {
@@ -345,6 +440,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  safeArea: {
+    flex: 1,
   },
   modeHeader: {
     flexDirection: 'row',
@@ -586,5 +684,42 @@ const styles = StyleSheet.create({
   complianceText: {
     fontSize: FONT_SIZES.xs,
     color: COLORS.textMuted,
+  },
+
+  // ── Finalize banner ──
+  finalizeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+    paddingVertical: SPACING.sm + 4,
+    paddingHorizontal: SPACING.md,
+    backgroundColor: COLORS.success,
+    borderRadius: BORDER_RADIUS.xl,
+    gap: SPACING.sm,
+    ...SHADOWS.glow(COLORS.success, 0.25),
+  },
+  finalizeBannerLoading: { opacity: 0.7 },
+  finalizeBannerEmoji: { fontSize: 20 },
+  finalizeBannerBody: { flex: 1 },
+  finalizeBannerTitle: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: FONT_WEIGHTS.bold,
+    color: COLORS.white,
+  },
+  finalizeBannerSub: {
+    fontSize: FONT_SIZES.xs,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
+  },
+  finalizeBannerArrow: {
+    fontSize: 22,
+    color: COLORS.white,
+    fontWeight: FONT_WEIGHTS.bold,
+  },
+  finalizeBannerText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.white,
+    fontWeight: FONT_WEIGHTS.semibold,
   },
 });

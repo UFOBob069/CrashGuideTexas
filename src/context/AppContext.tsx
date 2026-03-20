@@ -6,11 +6,13 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { randomUUID } from 'expo-crypto';
 import {
   AccidentReport,
+  AccidentSummary,
   ChatMessage,
   ChatMode,
   ChecklistItem,
   EvidenceItem,
   ContactInfo,
+  OtherDriverInfo,
   LeadQualification,
   RoutingDecision,
 } from '../types';
@@ -24,7 +26,10 @@ interface AppState {
   checklist: ChecklistItem[];
   currentMode: ChatMode;
   isLoading: boolean;
+  isSaving: boolean;
   routingDecision: RoutingDecision | null;
+  currentAccidentId: string | null;
+  accidents: AccidentSummary[];
 }
 
 const createInitialReport = (): AccidentReport => ({
@@ -47,23 +52,26 @@ const createInitialReport = (): AccidentReport => ({
   commercialVehicleInvolved: false,
   rideshareInvolved: false,
   evidence: [],
+  otherDriverInfo: null,
   contactInfo: null,
   consentToShareWithLawyer: false,
   qualification: null,
 });
 
+const emptyChatMessages = (): Record<ChatMode, ChatMessage[]> => ({
+  urgent: [], document: [], intake: [], connect: [],
+});
+
 const initialState: AppState = {
   report: createInitialReport(),
-  chatMessages: {
-    urgent: [],
-    document: [],
-    intake: [],
-    connect: [],
-  },
+  chatMessages: emptyChatMessages(),
   checklist: ACCIDENT_CHECKLIST.map((item) => ({ ...item })),
   currentMode: 'urgent',
   isLoading: false,
+  isSaving: false,
   routingDecision: null,
+  currentAccidentId: null,
+  accidents: [],
 };
 
 // --- Actions ---
@@ -72,14 +80,20 @@ type AppAction =
   | { type: 'ADD_CHAT_MESSAGE'; payload: { mode: ChatMode; message: ChatMessage } }
   | { type: 'SET_MODE'; payload: ChatMode }
   | { type: 'SET_LOADING'; payload: boolean }
+  | { type: 'SET_SAVING'; payload: boolean }
   | { type: 'UPDATE_REPORT'; payload: Partial<AccidentReport> }
   | { type: 'ADD_EVIDENCE'; payload: EvidenceItem }
   | { type: 'REMOVE_EVIDENCE'; payload: string }
+  | { type: 'SET_OTHER_DRIVER'; payload: OtherDriverInfo }
   | { type: 'SET_CONTACT_INFO'; payload: ContactInfo }
   | { type: 'SET_CONSENT'; payload: boolean }
   | { type: 'SET_QUALIFICATION'; payload: LeadQualification }
   | { type: 'SET_ROUTING_DECISION'; payload: RoutingDecision }
   | { type: 'TOGGLE_CHECKLIST_ITEM'; payload: string }
+  | { type: 'SET_CURRENT_ACCIDENT_ID'; payload: string }
+  | { type: 'SET_ACCIDENTS'; payload: AccidentSummary[] }
+  | { type: 'LOAD_ACCIDENT'; payload: { report: AccidentReport; checklist: ChecklistItem[]; chatMessages: Record<ChatMode, ChatMessage[]>; accidentId: string } }
+  | { type: 'NEW_ACCIDENT'; payload?: undefined }
   | { type: 'RESET'; payload?: undefined };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -101,6 +115,35 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
+
+    case 'SET_SAVING':
+      return { ...state, isSaving: action.payload };
+
+    case 'SET_CURRENT_ACCIDENT_ID':
+      return { ...state, currentAccidentId: action.payload };
+
+    case 'SET_ACCIDENTS':
+      return { ...state, accidents: action.payload };
+
+    case 'LOAD_ACCIDENT':
+      return {
+        ...state,
+        report: action.payload.report,
+        checklist: action.payload.checklist,
+        chatMessages: action.payload.chatMessages,
+        currentAccidentId: action.payload.accidentId,
+        routingDecision: null,
+      };
+
+    case 'NEW_ACCIDENT':
+      return {
+        ...state,
+        report: createInitialReport(),
+        chatMessages: emptyChatMessages(),
+        checklist: ACCIDENT_CHECKLIST.map((item) => ({ ...item })),
+        currentAccidentId: null,
+        routingDecision: null,
+      };
 
     case 'UPDATE_REPORT':
       return {
@@ -128,6 +171,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
         report: {
           ...state.report,
           evidence: state.report.evidence.filter((e) => e.id !== action.payload),
+          updatedAt: new Date(),
+        },
+      };
+
+    case 'SET_OTHER_DRIVER':
+      return {
+        ...state,
+        report: {
+          ...state.report,
+          otherDriverInfo: action.payload,
           updatedAt: new Date(),
         },
       };

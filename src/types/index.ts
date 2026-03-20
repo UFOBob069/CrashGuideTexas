@@ -60,6 +60,9 @@ export interface AccidentReport {
   // Evidence
   evidence: EvidenceItem[];
 
+  // Other driver
+  otherDriverInfo: OtherDriverInfo | null;
+
   // Contact
   contactInfo: ContactInfo | null;
 
@@ -129,6 +132,20 @@ export interface ContactInfo {
   preferredContact: 'phone' | 'email' | 'text';
 }
 
+// --- Other Driver Info ---
+
+export interface OtherDriverInfo {
+  name: string;
+  phone: string;
+  licenseNumber: string;
+  licensePlate: string;
+  vehicleYear: string;
+  vehicleMake: string;
+  vehicleModel: string;
+  insuranceCompany: string;
+  insurancePolicyNumber: string;
+}
+
 // --- Lead Qualification & Routing ---
 
 export interface LeadQualification {
@@ -175,12 +192,30 @@ export interface ChecklistItem {
 
 export type ChecklistCategory = 'safety' | 'medical' | 'documentation' | 'legal' | 'insurance';
 
+// --- Accident Summary (lightweight, for list view) ---
+
+export interface AccidentSummary {
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+  title: string;
+  incidentType: IncidentType;
+  incidentCity: string;
+  incidentDate: Date | null;
+  injurySeverity: InjurySeverity;
+  evidenceCount: number;
+}
+
 // --- Navigation ---
 
 export type RootStackParamList = {
+  Auth: undefined;
+  Onboarding: undefined;
   Home: undefined;
+  Accidents: undefined;
   Chat: { mode: ChatMode };
   Document: undefined;
+  OtherDriver: undefined;
   Checklist: undefined;
   ConnectLawyer: { report?: AccidentReport };
   ContactForm: undefined;

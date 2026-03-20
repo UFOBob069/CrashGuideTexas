@@ -31,12 +31,18 @@ export async function requestLocationPermissions(): Promise<boolean> {
   return status === 'granted';
 }
 
+const LOCATION_TIMEOUT_MS = 6000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), ms));
+  return Promise.race([promise, timer]);
+}
+
 export async function getCurrentLocation(): Promise<GeoLocation | null> {
   try {
     if (isWeb) {
-      // Use browser Geolocation API on web
       if (!('geolocation' in navigator)) return null;
-      return new Promise((resolve) => {
+      const webPromise = new Promise<GeoLocation | null>((resolve) => {
         navigator.geolocation.getCurrentPosition(
           (pos) => resolve({
             latitude: pos.coords.latitude,
@@ -44,17 +50,22 @@ export async function getCurrentLocation(): Promise<GeoLocation | null> {
             accuracy: pos.coords.accuracy,
           }),
           () => resolve(null),
-          { enableHighAccuracy: true, timeout: 10000 },
+          { enableHighAccuracy: false, timeout: LOCATION_TIMEOUT_MS },
         );
       });
+      return await withTimeout(webPromise, LOCATION_TIMEOUT_MS);
     }
 
     const hasPermission = await requestLocationPermissions();
     if (!hasPermission) return null;
 
-    const location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.High,
+    // Use Balanced accuracy — faster fix, still accurate enough for tagging
+    const locationPromise = Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced,
     });
+
+    const location = await withTimeout(locationPromise, LOCATION_TIMEOUT_MS);
+    if (!location) return null;
 
     return {
       latitude: location.coords.latitude,
@@ -62,7 +73,7 @@ export async function getCurrentLocation(): Promise<GeoLocation | null> {
       accuracy: location.coords.accuracy,
     };
   } catch (error) {
-    console.error('Error getting location:', error);
+    console.warn('Could not get location for photo tag:', error);
     return null;
   }
 }
