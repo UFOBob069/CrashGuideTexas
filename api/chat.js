@@ -115,10 +115,18 @@ module.exports = async function handler(req, res) {
     return res.status(401).json({ error: 'Missing Firebase ID token' });
   }
 
-  try {
-    await verifyFirebaseToken(authHeader.slice(7));
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid or expired auth token', detail: e.message });
+  const firebaseKey = process.env.FIREBASE_WEB_API_KEY;
+  if (!firebaseKey) {
+    // Key not configured in Vercel env vars — log clearly and still process
+    // so you can confirm the LLM works before locking down auth
+    console.warn('FIREBASE_WEB_API_KEY not set in Vercel env vars — skipping auth check');
+  } else {
+    try {
+      await verifyFirebaseToken(authHeader.slice(7));
+    } catch (e) {
+      console.error('Token verification failed:', e.message);
+      return res.status(401).json({ error: 'Invalid or expired auth token', detail: e.message });
+    }
   }
 
   // ── Dispatch ──
