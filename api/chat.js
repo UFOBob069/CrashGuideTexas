@@ -5,11 +5,7 @@
 // only authenticated users can trigger LLM requests.
 // ============================================================
 
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
-// ── System prompts (kept server-side) ────────────────────
-
-const SYSTEM_PROMPTS: Record<string, string> = {
+const SYSTEM_PROMPTS = {
   urgent: `You are CrashGuide Texas, an emergency assistant for people who have just been in a vehicle accident in Texas.
 Your role is to provide immediate, calm, step-by-step guidance. Always prioritize safety first.
 Ask if they're safe, check for injuries, and guide them through the immediate aftermath.
@@ -39,9 +35,8 @@ For injurySeverity use: none, minor, moderate, severe.
 If a field isn't mentioned, omit it.`;
 
 // ── Firebase token verification ───────────────────────────
-// Uses Firebase's identity lookup REST API — no service account needed.
 
-async function verifyFirebaseToken(idToken: string): Promise<void> {
+async function verifyFirebaseToken(idToken) {
   const apiKey = process.env.FIREBASE_WEB_API_KEY;
   if (!apiKey) throw new Error('FIREBASE_WEB_API_KEY not configured');
 
@@ -54,18 +49,14 @@ async function verifyFirebaseToken(idToken: string): Promise<void> {
     },
   );
 
-  if (!resp.ok) throw new Error('Token verification failed');
-  const data = await resp.json() as { users?: { localId: string }[] };
+  if (!resp.ok) throw new Error(`Firebase verification failed: ${resp.status}`);
+  const data = await resp.json();
   if (!data.users?.length) throw new Error('No user found for token');
 }
 
 // ── LLM call ─────────────────────────────────────────────
 
-async function callLLM(
-  messages: { role: string; content: string }[],
-  systemPrompt: string,
-  maxTokens = 1024,
-): Promise<string> {
+async function callLLM(messages, systemPrompt, maxTokens = 1024) {
   const apiKey = process.env.LLM_API_KEY;
   const apiUrl = process.env.LLM_API_URL || 'https://api.openai.com/v1/chat/completions';
   const model = process.env.LLM_MODEL || 'gpt-4o-mini';
@@ -73,8 +64,8 @@ async function callLLM(
   if (!apiKey) throw new Error('LLM_API_KEY not configured on server');
 
   const isAnthropic = apiUrl.includes('anthropic.com');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  let body: string;
+  const headers = { 'Content-Type': 'application/json' };
+  let body;
 
   if (isAnthropic) {
     headers['x-api-key'] = apiKey;
@@ -90,7 +81,10 @@ async function callLLM(
     body = JSON.stringify({
       model,
       max_tokens: maxTokens,
-      messages: [{ role: 'system', content: systemPrompt }, ...messages.filter((m) => m.role !== 'system')],
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...messages.filter((m) => m.role !== 'system'),
+      ],
     });
   }
 
@@ -100,11 +94,7 @@ async function callLLM(
     throw new Error(`LLM API ${resp.status}: ${err}`);
   }
 
-  const data = await resp.json() as {
-    content?: { text: string }[];
-    choices?: { message: { content: string } }[];
-  };
-
+  const data = await resp.json();
   return isAnthropic
     ? (data.content?.[0]?.text ?? '')
     : (data.choices?.[0]?.message?.content ?? '');
@@ -112,7 +102,7 @@ async function callLLM(
 
 // ── Handler ───────────────────────────────────────────────
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -128,15 +118,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     await verifyFirebaseToken(authHeader.slice(7));
   } catch (e) {
-    return res.status(401).json({ error: 'Invalid or expired auth token' });
+    return res.status(401).json({ error: 'Invalid or expired auth token', detail: e.message });
   }
 
   // ── Dispatch ──
-  const { task, messages, mode } = req.body as {
-    task: 'chat' | 'extract';
-    messages: { role: string; content: string }[];
-    mode?: string;
-  };
+  const { task, messages, mode } = req.body;
 
   try {
     if (task === 'extract') {
@@ -147,16 +133,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         512,
       );
       let extracted = {};
-      try { extracted = JSON.parse(raw.replace(/```json|```/g, '').trim()); } catch { /* use empty */ }
+      try { extracted = JSON.parse(raw.replace(/```json|```/g, '').trim()); } catch (_) { /* use empty */ }
       return res.status(200).json({ extracted });
     }
 
-    // default: chat
-    const systemPrompt = SYSTEM_PROMPTS[mode ?? 'intake'] ?? SYSTEM_PROMPTS.intake;
+    const systemPrompt = SYSTEM_PROMPTS[mode] ?? SYSTEM_PROMPTS.intake;
     const content = await callLLM(messages, systemPrompt);
     return res.status(200).json({ content });
   } catch (e) {
     console.error('LLM proxy error:', e);
-    return res.status(500).json({ error: 'LLM request failed' });
+    return res.status(500).json({ error: 'LLM request failed', detail: e.message });
   }
 }
