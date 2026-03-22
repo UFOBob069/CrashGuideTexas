@@ -1,5 +1,9 @@
 {
-  "buildCommand": "",
-  "outputDirectory": "public",
-  "installCommand": "npm install"
+  "buildCommand": "node scripts/build-web.js",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "rewrites": [
+    { "source": "/app/(.*)", "destination": "/app/index.html" },
+    { "source": "/app",      "destination": "/app/index.html" }
+  ]
 }

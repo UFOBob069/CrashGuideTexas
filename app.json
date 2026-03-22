@@ -46,6 +46,9 @@
       "themeColor": "#1E40AF",
       "backgroundColor": "#1E40AF"
     },
+    "experiments": {
+      "baseUrl": "/app"
+    },
     "plugins": [
       "expo-camera",
       "expo-image-picker",
