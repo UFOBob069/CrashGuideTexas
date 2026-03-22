@@ -1,5 +1,883 @@
 <!DOCTYPE html>
-<html>
-  <head><title>CrashGuide Texas API</title></head>
-  <body><p>API server — no web UI here.</p></body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Texas Crash Guide helps you document car accidents, connect with top-rated lawyers, and know your rights — all from your phone in minutes.">
+  <meta property="og:title" content="Texas Crash Guide — Know Your Rights After an Accident">
+  <meta property="og:description" content="AI-powered accident documentation and legal connection for Texas drivers. Free to download.">
+  <title>Texas Crash Guide — Car Accident Help in Texas</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:          #0D1B3E;
+      --primary:       #1E40AF;
+      --primary-mid:   #1D4ED8;
+      --primary-light: #3B82F6;
+      --accent:        #F5A623;
+      --accent-dark:   #D4891A;
+      --white:         #FFFFFF;
+      --gray-50:       #F8FAFC;
+      --gray-100:      #F1F5F9;
+      --gray-200:      #E2E8F0;
+      --gray-400:      #94A3B8;
+      --gray-500:      #64748B;
+      --gray-700:      #334155;
+      --gray-900:      #0F172A;
+      --success:       #10B981;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      color: var(--gray-900);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4 { font-family: 'Sora', sans-serif; line-height: 1.15; }
+    h1 { font-size: clamp(2.4rem, 5vw, 3.9rem); font-weight: 800; letter-spacing: -0.025em; }
+    h2 { font-size: clamp(1.8rem, 3.5vw, 2.7rem); font-weight: 700; letter-spacing: -0.02em; }
+    h3 { font-size: 1.1rem; font-weight: 600; }
+    p  { line-height: 1.7; }
+
+    .container { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 12px;
+      font-family: 'Sora', sans-serif; font-size: 0.95rem; font-weight: 700;
+      text-decoration: none; transition: all 0.2s ease;
+      cursor: pointer; border: none; white-space: nowrap;
+    }
+    .btn-amber {
+      background: var(--accent); color: #fff;
+      box-shadow: 0 4px 20px rgba(245,166,35,0.35);
+    }
+    .btn-amber:hover { background: var(--accent-dark); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(245,166,35,0.45); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.1); color: #fff;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      backdrop-filter: blur(8px);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.18); transform: translateY(-2px); }
+    .btn-dark { background: var(--gray-900); color: #fff; }
+    .btn-dark:hover { background: #1a2744; transform: translateY(-2px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+
+    /* ── Section labels ── */
+    .label {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--primary-light);
+      margin-bottom: 12px;
+    }
+    .label.gold { color: var(--accent); }
+
+    /* ─────────────────────────────────────────
+       NAV
+    ───────────────────────────────────────── */
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      padding: 18px 0;
+      background: rgba(13, 27, 62, 0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: padding 0.3s, background 0.3s;
+    }
+    #nav.scrolled { padding: 12px 0; background: rgba(13, 27, 62, 0.97); }
+    .nav-inner {
+      display: flex; align-items: center; justify-content: space-between;
+      max-width: 1160px; margin: 0 auto; padding: 0 24px;
+    }
+    .nav-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .nav-logo-mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .nav-logo-text {
+      font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem; color: #fff;
+    }
+    .nav-logo-text em { color: var(--accent); font-style: normal; }
+    .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
+    .nav-links a {
+      color: rgba(255,255,255,0.65); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: #fff; }
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+    .nav-actions .btn { padding: 10px 20px; font-size: 0.85rem; }
+    @media (max-width: 780px) { .nav-links { display: none; } }
+
+    /* ─────────────────────────────────────────
+       HERO
+    ───────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #08122A 0%, #0D1B3E 30%, #1E3A8A 70%, #1D4ED8 100%);
+      position: relative; overflow: hidden;
+      display: flex; align-items: center;
+      padding: 140px 0 80px;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse at 65% 40%, rgba(59,130,246,0.22) 0%, transparent 55%),
+        radial-gradient(ellipse at 10% 80%, rgba(245,166,35,0.07) 0%, transparent 45%),
+        radial-gradient(ellipse at 90% 10%, rgba(30,64,175,0.2) 0%, transparent 40%);
+    }
+    /* subtle grid texture */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 60px 60px;
+    }
+    .hero-grid {
+      display: grid; grid-template-columns: 1fr auto;
+      gap: 60px; align-items: center;
+      position: relative; z-index: 1;
+    }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,166,35,0.12); border: 1px solid rgba(245,166,35,0.3);
+      color: var(--accent); padding: 6px 14px; border-radius: 100px;
+      font-size: 0.8rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; margin-bottom: 20px;
+    }
+    .hero-eyebrow-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      animation: pulse-dot 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.5; transform: scale(0.7); }
+    }
+    .hero h1 { color: #fff; margin-bottom: 20px; }
+    .hero h1 .highlight {
+      color: var(--accent);
+      text-decoration: underline;
+      text-decoration-color: rgba(245,166,35,0.35);
+      text-underline-offset: 6px;
+    }
+    .hero-sub {
+      color: rgba(255,255,255,0.65); font-size: 1.1rem;
+      max-width: 500px; margin-bottom: 36px; line-height: 1.75;
+    }
+    .hero-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 52px; }
+    .hero-stats {
+      display: flex; gap: 36px;
+      padding-top: 32px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .hero-stat-num {
+      font-family: 'Sora', sans-serif; font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1;
+    }
+    .hero-stat-label { font-size: 0.78rem; color: rgba(255,255,255,0.45); margin-top: 3px; }
+
+    /* Phone mockup */
+    .phone-wrap {
+      flex-shrink: 0;
+      animation: float 5s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0.5deg); }
+      50%       { transform: translateY(-14px) rotate(-0.5deg); }
+    }
+    .phone {
+      width: 256px; height: 528px;
+      background: #07112A;
+      border-radius: 44px;
+      border: 5px solid rgba(255,255,255,0.12);
+      box-shadow:
+        0 50px 100px rgba(0,0,0,0.55),
+        0 0 0 1px rgba(255,255,255,0.04),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .phone-notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 88px; height: 22px;
+      background: #07112A; border-radius: 0 0 14px 14px; z-index: 10;
+    }
+    .phone-inner {
+      flex: 1; display: flex; flex-direction: column;
+      background: linear-gradient(165deg, #1E3A8A 0%, #1D4ED8 100%);
+      padding: 38px 16px 16px;
+      overflow: hidden;
+    }
+    .p-header {
+      font-family: 'Sora', sans-serif; font-size: 0.6rem; font-weight: 700;
+      color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+    .p-title {
+      font-family: 'Sora', sans-serif; font-size: 0.95rem; font-weight: 800; color: #fff;
+      margin-bottom: 18px; line-height: 1.3;
+    }
+    .p-card {
+      background: rgba(255,255,255,0.08); border-radius: 12px; padding: 11px 13px;
+      margin-bottom: 8px; border: 1px solid rgba(255,255,255,0.1);
+    }
+    .p-card-label { font-size: 0.58rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3px; }
+    .p-card-val {
+      font-family: 'Sora', sans-serif; font-size: 0.78rem; font-weight: 600; color: #fff;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .p-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--success); flex-shrink: 0; }
+    .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 10px 0; }
+    .p-action {
+      background: rgba(255,255,255,0.08); border-radius: 11px; padding: 11px 6px;
+      text-align: center; border: 1px solid rgba(255,255,255,0.09);
+    }
+    .p-action-icon { font-size: 1.2rem; margin-bottom: 3px; }
+    .p-action-text { font-size: 0.6rem; color: rgba(255,255,255,0.6); font-weight: 500; }
+    .p-cta {
+      margin-top: auto;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      border-radius: 12px; padding: 12px;
+      text-align: center;
+      font-family: 'Sora', sans-serif; font-size: 0.75rem; font-weight: 700; color: #fff;
+      box-shadow: 0 4px 18px rgba(245,166,35,0.4);
+    }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; justify-items: center; text-align: center; }
+      .hero-sub { margin: 0 auto 36px; }
+      .hero-ctas { justify-content: center; }
+      .hero-stats { justify-content: center; }
+      .phone-wrap { display: none; }
+    }
+
+    /* ─────────────────────────────────────────
+       TRUST BAR
+    ───────────────────────────────────────── */
+    .trust-bar {
+      background: #fff;
+      border-bottom: 1px solid var(--gray-200);
+      padding: 20px 0;
+    }
+    .trust-list {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: center;
+      gap: 12px 40px;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.875rem; font-weight: 600; color: var(--gray-700);
+    }
+
+    /* ─────────────────────────────────────────
+       FEATURES
+    ───────────────────────────────────────── */
+    .features { padding: 100px 0; background: var(--gray-50); }
+    .section-head { text-align: center; margin-bottom: 60px; }
+    .section-head h2 { margin-bottom: 14px; }
+    .section-head p { color: var(--gray-500); font-size: 1.05rem; max-width: 520px; margin: 0 auto; }
+
+    .feat-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px;
+    }
+    @media (max-width: 960px) { .feat-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 580px) { .feat-grid { grid-template-columns: 1fr; } }
+
+    .feat-card {
+      background: #fff; border-radius: 20px; padding: 28px 26px;
+      border: 1px solid var(--gray-200);
+      transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    }
+    .feat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 48px rgba(30,64,175,0.09);
+      border-color: rgba(59,130,246,0.35);
+    }
+    .feat-icon {
+      width: 50px; height: 50px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.45rem; margin-bottom: 16px;
+    }
+    .feat-card h3 { margin-bottom: 8px; }
+    .feat-card p { font-size: 0.88rem; color: var(--gray-500); line-height: 1.65; }
+
+    /* ─────────────────────────────────────────
+       HOW IT WORKS
+    ───────────────────────────────────────── */
+    .how { padding: 100px 0; background: #fff; }
+    .how-inner {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+    }
+    @media (max-width: 860px) { .how-inner { grid-template-columns: 1fr; } .how-visual { display: none; } }
+
+    .steps { display: flex; flex-direction: column; gap: 30px; }
+    .step { display: flex; gap: 18px; }
+    .step-num {
+      width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Sora', sans-serif; font-size: 1rem; font-weight: 800; color: #fff;
+      box-shadow: 0 4px 16px rgba(30,64,175,0.3);
+    }
+    .step h3 { margin-bottom: 5px; }
+    .step p { font-size: 0.88rem; color: var(--gray-500); line-height: 1.65; }
+
+    /* Chat phone mockup for how section */
+    .how-phone {
+      width: 230px; height: 470px;
+      background: linear-gradient(165deg, var(--navy), #1E3A8A);
+      border-radius: 36px; border: 5px solid rgba(255,255,255,0.1);
+      box-shadow: 0 40px 80px rgba(13,27,62,0.45);
+      overflow: hidden; display: flex; flex-direction: column;
+      padding: 28px 14px 14px; margin: 0 auto;
+    }
+    .chat-header {
+      font-family: 'Sora', sans-serif; font-size: 0.6rem; font-weight: 700;
+      color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.12em;
+      margin-bottom: 14px;
+    }
+    .chat-body { flex: 1; display: flex; flex-direction: column; gap: 10px; overflow: hidden; }
+    .bubble {
+      padding: 9px 12px; border-radius: 14px; font-size: 0.7rem; line-height: 1.5;
+      color: rgba(255,255,255,0.85); border: 1px solid transparent;
+    }
+    .bubble.ai {
+      background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1);
+      border-radius: 4px 14px 14px 14px; align-self: flex-start;
+    }
+    .bubble.user {
+      background: rgba(245,166,35,0.13); border-color: rgba(245,166,35,0.22);
+      border-radius: 14px 4px 14px 14px; align-self: flex-end; max-width: 85%;
+    }
+    .typing-dots { display: flex; gap: 4px; padding: 8px 12px; align-self: flex-start; }
+    .typing-dots span {
+      width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.3);
+    }
+    .typing-dots span:nth-child(1) { animation: blink 1.2s 0s infinite; }
+    .typing-dots span:nth-child(2) { animation: blink 1.2s 0.2s infinite; }
+    .typing-dots span:nth-child(3) { animation: blink 1.2s 0.4s infinite; }
+    @keyframes blink { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+    .chat-input {
+      background: rgba(255,255,255,0.07); border-radius: 10px;
+      padding: 9px 12px; border: 1px solid rgba(255,255,255,0.1);
+      font-size: 0.68rem; color: rgba(255,255,255,0.3); margin-top: 8px;
+    }
+
+    /* ─────────────────────────────────────────
+       LAWYER SECTION
+    ───────────────────────────────────────── */
+    .lawyers {
+      padding: 100px 0;
+      background: linear-gradient(145deg, #08122A 0%, #0D1B3E 40%, #1E3A8A 100%);
+      position: relative; overflow: hidden;
+    }
+    .lawyers::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 75% 50%, rgba(59,130,246,0.18) 0%, transparent 55%);
+    }
+    .lawyers-inner {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 72px; align-items: center;
+      position: relative; z-index: 1;
+    }
+    @media (max-width: 860px) { .lawyers-inner { grid-template-columns: 1fr; } }
+
+    .lawyers h2 { color: #fff; margin-bottom: 16px; }
+    .lawyers > .container > .lawyers-inner > div > p {
+      color: rgba(255,255,255,0.65); font-size: 1.05rem; margin-bottom: 28px;
+    }
+    .lawyer-pills { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 32px; }
+    .lpill {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
+      color: #fff; padding: 9px 18px; border-radius: 100px;
+      font-size: 0.85rem; font-weight: 600;
+    }
+
+    /* Lawyer card */
+    .lawyer-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 22px; padding: 26px;
+      backdrop-filter: blur(10px);
+    }
+    .lc-firm { display: flex; align-items: center; gap: 14px; margin-bottom: 18px; }
+    .lc-avatar {
+      width: 50px; height: 50px; border-radius: 14px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+    }
+    .lc-name { font-family: 'Sora', sans-serif; font-weight: 700; color: #fff; font-size: 0.95rem; }
+    .lc-stars { color: var(--accent); font-size: 0.85rem; letter-spacing: 1px; }
+    .lc-reviews { color: rgba(255,255,255,0.4); font-size: 0.78rem; }
+    .lc-tags { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 20px; }
+    .lc-tag {
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      color: rgba(255,255,255,0.65); padding: 4px 12px; border-radius: 100px;
+      font-size: 0.76rem;
+    }
+    .lc-cta {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      border-radius: 12px; padding: 13px; text-align: center;
+      font-family: 'Sora', sans-serif; font-size: 0.85rem; font-weight: 700; color: #fff;
+      cursor: pointer;
+    }
+
+    /* ─────────────────────────────────────────
+       DOWNLOAD
+    ───────────────────────────────────────── */
+    .download { padding: 100px 0; background: var(--gray-50); }
+    .download-inner { text-align: center; max-width: 580px; margin: 0 auto; }
+    .download-inner h2 { margin-bottom: 14px; }
+    .download-inner > p { color: var(--gray-500); font-size: 1.05rem; margin-bottom: 44px; }
+
+    .store-row {
+      display: flex; flex-wrap: wrap; justify-content: center; gap: 16px;
+      margin-bottom: 24px;
+    }
+    .store-btn {
+      display: flex; align-items: center; gap: 14px;
+      background: var(--gray-900); color: #fff;
+      padding: 14px 26px; border-radius: 16px;
+      text-decoration: none; transition: all 0.2s;
+      border: 1px solid rgba(255,255,255,0.06);
+      min-width: 190px;
+    }
+    .store-btn:hover { background: #1a2744; transform: translateY(-3px); box-shadow: 0 14px 36px rgba(0,0,0,0.22); }
+    .store-icon { font-size: 1.9rem; line-height: 1; }
+    .store-label { font-size: 0.68rem; color: rgba(255,255,255,0.5); letter-spacing: 0.05em; text-transform: uppercase; display: block; }
+    .store-name { font-family: 'Sora', sans-serif; font-size: 1.02rem; font-weight: 700; display: block; }
+
+    .web-note { font-size: 0.9rem; color: var(--gray-500); }
+    .web-note a { color: var(--primary); font-weight: 600; text-decoration: none; }
+    .web-note a:hover { text-decoration: underline; }
+
+    /* ─────────────────────────────────────────
+       FOOTER
+    ───────────────────────────────────────── */
+    footer { background: var(--navy); padding: 64px 0 32px; }
+    .footer-grid {
+      display: grid; grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 48px; margin-bottom: 48px;
+    }
+    @media (max-width: 820px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }
+
+    .footer-brand p {
+      color: rgba(255,255,255,0.4); font-size: 0.85rem; line-height: 1.75;
+      margin-top: 12px; max-width: 250px;
+    }
+    .foot-title {
+      font-family: 'Sora', sans-serif; font-weight: 700; font-size: 0.75rem;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: rgba(255,255,255,0.3); margin-bottom: 14px;
+    }
+    .foot-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .foot-links a {
+      color: rgba(255,255,255,0.5); text-decoration: none; font-size: 0.875rem;
+      transition: color 0.2s;
+    }
+    .foot-links a:hover { color: #fff; }
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.07);
+      padding-top: 24px;
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;
+    }
+    .footer-bottom p { font-size: 0.78rem; color: rgba(255,255,255,0.28); }
+    .footer-bottom a { color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.2s; }
+    .footer-bottom a:hover { color: #fff; }
+
+    /* ─────────────────────────────────────────
+       SCROLL ANIMATIONS
+    ───────────────────────────────────────── */
+    .fade-up {
+      opacity: 0; transform: translateY(32px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     NAV
+════════════════════════════════════════════ -->
+<nav id="nav">
+  <div class="nav-inner">
+    <a href="#" class="nav-logo">
+      <div class="nav-logo-mark">🚗</div>
+      <span class="nav-logo-text">Texas <em>Crash Guide</em></span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#lawyers">Lawyers</a></li>
+      <li><a href="#download">Download</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="#download" class="btn btn-amber">Get the App</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════
+     HERO
+════════════════════════════════════════════ -->
+<section class="hero" id="home">
+  <div class="container">
+    <div class="hero-grid">
+
+      <!-- Copy -->
+      <div>
+        <div class="hero-eyebrow">
+          <div class="hero-eyebrow-dot"></div>
+          AI-Powered Accident Guide for Texas
+        </div>
+        <h1>Know Your Rights<br>After a <span class="highlight">Texas Crash</span></h1>
+        <p class="hero-sub">
+          Document the scene, capture GPS-tagged evidence, and connect with a top-rated Texas attorney — all from your phone in minutes. Free to use.
+        </p>
+        <div class="hero-ctas">
+          <a href="#download" class="btn btn-amber">📱 Download Free</a>
+          <a href="#how"      class="btn btn-ghost">See How It Works</a>
+        </div>
+        <div class="hero-stats">
+          <div>
+            <div class="hero-stat-num">100%</div>
+            <div class="hero-stat-label">Free to use</div>
+          </div>
+          <div>
+            <div class="hero-stat-num">No Fee</div>
+            <div class="hero-stat-label">Until you win</div>
+          </div>
+          <div>
+            <div class="hero-stat-num">24/7</div>
+            <div class="hero-stat-label">AI guidance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone mockup -->
+      <div class="phone-wrap">
+        <div class="phone">
+          <div class="phone-notch"></div>
+          <div class="phone-inner">
+            <div class="p-header">Texas Crash Guide</div>
+            <div class="p-title">Active Report<br>Mar 20, 2026 · 3:14 PM</div>
+            <div class="p-card">
+              <div class="p-card-label">Status</div>
+              <div class="p-card-val"><div class="p-dot"></div>Evidence collection in progress</div>
+            </div>
+            <div class="p-card">
+              <div class="p-card-label">Location</div>
+              <div class="p-card-val">📍 Austin, TX 78701</div>
+            </div>
+            <div class="p-card">
+              <div class="p-card-label">Photos Captured</div>
+              <div class="p-card-val">📸 4 photos GPS-tagged</div>
+            </div>
+            <div class="p-grid">
+              <div class="p-action"><div class="p-action-icon">📷</div><div class="p-action-text">Document</div></div>
+              <div class="p-action"><div class="p-action-icon">💬</div><div class="p-action-text">Chat</div></div>
+              <div class="p-action"><div class="p-action-icon">☑️</div><div class="p-action-text">Checklist</div></div>
+              <div class="p-action"><div class="p-action-icon">⚖️</div><div class="p-action-text">Lawyer</div></div>
+            </div>
+            <div class="p-cta">Connect with a Lawyer →</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     TRUST BAR
+════════════════════════════════════════════ -->
+<div class="trust-bar">
+  <div class="container">
+    <div class="trust-list">
+      <div class="trust-item">⚡ Free to Download</div>
+      <div class="trust-item">🔒 Your Data is Private</div>
+      <div class="trust-item">💰 No Fee Until You Win</div>
+      <div class="trust-item">⭐ Top-Rated Lawyers Only</div>
+      <div class="trust-item">📍 GPS-Tagged Evidence</div>
+      <div class="trust-item">🤖 AI-Guided Documentation</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     FEATURES
+════════════════════════════════════════════ -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="section-head fade-up">
+      <div class="label">✦ Features</div>
+      <h2>Everything You Need<br>Right at the Scene</h2>
+      <p>From the moment of impact to your attorney's office — we guide every step.</p>
+    </div>
+    <div class="feat-grid">
+      <div class="feat-card fade-up">
+        <div class="feat-icon" style="background:#EFF6FF;">📷</div>
+        <h3>GPS-Tagged Photos</h3>
+        <p>Capture scene photos automatically tagged with GPS coordinates and timestamps — admissible, organized evidence from the start.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon" style="background:#FFF7ED;">🚗</div>
+        <h3>Other Driver Info</h3>
+        <p>A guided form to quickly capture license plate, insurance details, driver's license, and contact information accurately.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon" style="background:#F0FDF4;">💬</div>
+        <h3>AI Incident Guide</h3>
+        <p>Our AI walks you through what happened in plain language, building a complete incident summary you can share with your attorney.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon" style="background:#F0F9FF;">☑️</div>
+        <h3>Scene Checklist</h3>
+        <p>An interactive checklist ensures you don't miss anything critical — skid marks, witnesses, traffic signals, road conditions, and more.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon" style="background:#FFF7ED;">📄</div>
+        <h3>PDF Accident Report</h3>
+        <p>Generate a professional accident report complete with all photos, GPS data, and descriptions — ready to send to insurance or your lawyer.</p>
+      </div>
+      <div class="feat-card fade-up">
+        <div class="feat-icon" style="background:#FDF4FF;">☁️</div>
+        <h3>Auto-Saved to Cloud</h3>
+        <p>Everything saves automatically to your secure account. Access reports from any device, anytime — even months-old past accidents.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     HOW IT WORKS
+════════════════════════════════════════════ -->
+<section class="how" id="how">
+  <div class="container">
+    <div class="how-inner">
+
+      <!-- Steps -->
+      <div>
+        <div class="label fade-up">✦ How It Works</div>
+        <h2 class="fade-up" style="margin-bottom: 36px;">From Crash to Claim<br>in 4 Simple Steps</h2>
+        <div class="steps">
+          <div class="step fade-up">
+            <div class="step-num">1</div>
+            <div>
+              <h3>Document the Scene</h3>
+              <p>Take GPS-tagged photos, record the other driver's info, and complete the scene checklist — organized automatically.</p>
+            </div>
+          </div>
+          <div class="step fade-up">
+            <div class="step-num">2</div>
+            <div>
+              <h3>Tell Us What Happened</h3>
+              <p>Chat with our AI to describe the accident in your own words. It builds a structured incident summary for you.</p>
+            </div>
+          </div>
+          <div class="step fade-up">
+            <div class="step-num">3</div>
+            <div>
+              <h3>Connect with a Lawyer</h3>
+              <p>Get matched with a top-rated Texas accident attorney. No fee unless you win, and a free consultation is always included.</p>
+            </div>
+          </div>
+          <div class="step fade-up">
+            <div class="step-num">4</div>
+            <div>
+              <h3>Export Your Report</h3>
+              <p>Generate a complete PDF with all evidence, photos, and descriptions to share with insurance, attorneys, or anyone who needs it.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chat phone mockup -->
+      <div class="how-visual fade-up">
+        <div class="how-phone">
+          <div class="chat-header">Tell Us What Happened</div>
+          <div class="chat-body">
+            <div class="bubble ai">Hi! I'm here to help you document what happened. Can you briefly describe the accident?</div>
+            <div class="bubble user">I was rear-ended at a red light on I-35. The other driver ran into me at speed.</div>
+            <div class="bubble ai">Got it — <strong>rear-end collision on I-35</strong>. Were you or anyone else injured?</div>
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+          </div>
+          <div class="chat-input">Type your message…</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     LAWYERS
+════════════════════════════════════════════ -->
+<section class="lawyers" id="lawyers">
+  <div class="container">
+    <div class="lawyers-inner">
+
+      <!-- Copy -->
+      <div class="fade-up">
+        <div class="label gold">✦ Legal Help</div>
+        <h2 style="color:#fff; margin-bottom: 16px;">No Fee Until<br>You Win</h2>
+        <p style="color:rgba(255,255,255,0.65); font-size:1.05rem; margin-bottom:28px;">
+          We connect you with verified, top-rated Texas accident attorneys. Free consultations, no upfront costs — ever.
+        </p>
+        <div class="lawyer-pills">
+          <div class="lpill">💰 No Fee Until You Win</div>
+          <div class="lpill">⭐ Top-Rated Lawyers Only</div>
+          <div class="lpill">📞 Free Consultation</div>
+          <div class="lpill">🏅 Texas Licensed</div>
+        </div>
+        <a href="#download" class="btn btn-amber">Get Matched Now</a>
+      </div>
+
+      <!-- Lawyer card -->
+      <div class="lawyer-card fade-up">
+        <div class="lc-firm">
+          <div class="lc-avatar">⚖️</div>
+          <div>
+            <div class="lc-name">Texas Accident Law Group</div>
+            <div class="lc-stars">★★★★★</div>
+            <div class="lc-reviews">4.9 · 312 reviews</div>
+          </div>
+        </div>
+        <div class="lc-tags">
+          <span class="lc-tag">Car Accidents</span>
+          <span class="lc-tag">Personal Injury</span>
+          <span class="lc-tag">Free Consult</span>
+          <span class="lc-tag">No Fee Until Win</span>
+        </div>
+        <div class="lc-cta">Request Free Consultation →</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     DOWNLOAD
+════════════════════════════════════════════ -->
+<section class="download" id="download">
+  <div class="container">
+    <div class="download-inner fade-up">
+      <div class="label" style="justify-content:center;">✦ Download</div>
+      <h2>Free on iOS &amp; Android</h2>
+      <p>Download Texas Crash Guide and be prepared before an accident ever happens.</p>
+      <div class="store-row">
+        <a href="https://apps.apple.com" class="store-btn" target="_blank" rel="noopener noreferrer">
+          <span class="store-icon"></span>
+          <span>
+            <span class="store-label">Download on the</span>
+            <span class="store-name">App Store</span>
+          </span>
+        </a>
+        <a href="https://play.google.com" class="store-btn" target="_blank" rel="noopener noreferrer">
+          <span class="store-icon" style="font-size:1.6rem;">▶</span>
+          <span>
+            <span class="store-label">Get it on</span>
+            <span class="store-name">Google Play</span>
+          </span>
+        </a>
+      </div>
+      <p class="web-note">Prefer the browser? <a href="/app">Open Web App →</a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════
+     FOOTER
+════════════════════════════════════════════ -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+
+      <div class="footer-brand">
+        <a href="#" class="nav-logo">
+          <div class="nav-logo-mark">🚗</div>
+          <span class="nav-logo-text">Texas <em>Crash Guide</em></span>
+        </a>
+        <p>AI-powered accident documentation and legal connection for Texas drivers. Free to download.</p>
+      </div>
+
+      <div>
+        <div class="foot-title">Product</div>
+        <ul class="foot-links">
+          <li><a href="#features">Features</a></li>
+          <li><a href="#how">How It Works</a></li>
+          <li><a href="#lawyers">Find a Lawyer</a></li>
+          <li><a href="#download">Download</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="foot-title">Legal</div>
+        <ul class="foot-links">
+          <li><a href="/privacy">Privacy Policy</a></li>
+          <li><a href="/terms">Terms of Use</a></li>
+          <li><a href="/disclaimer">Disclaimer</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <div class="foot-title">Contact</div>
+        <ul class="foot-links">
+          <li><a href="mailto:hello@texascrashguide.com">hello@texascrashguide.com</a></li>
+          <li><a href="#download">Support</a></li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 Texas Crash Guide. All rights reserved.</p>
+      <p>Not a law firm. For legal advice, consult a <a href="#lawyers">licensed Texas attorney</a>.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Sticky nav shadow
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 50);
+  }, { passive: true });
+
+  // Staggered scroll-reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  // Assign stagger delays to siblings within the same parent
+  document.querySelectorAll('.fade-up').forEach((el) => {
+    const siblings = Array.from(el.parentElement.querySelectorAll(':scope > .fade-up'));
+    const idx = siblings.indexOf(el);
+    if (idx > 0) el.style.transitionDelay = `${idx * 0.09}s`;
+    observer.observe(el);
+  });
+</script>
+
+</body>
 </html>
