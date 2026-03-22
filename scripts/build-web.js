@@ -13,7 +13,11 @@ const APP_DIR = path.join(DIST, 'app');
 
 // ── 1. Build Expo for web ──────────────────────────────────
 console.log('Building Expo web app…');
-execSync('npx expo export --platform web', { stdio: 'inherit', cwd: ROOT });
+execSync('npx expo export --platform web', {
+  stdio: 'inherit',
+  cwd: ROOT,
+  env: { ...process.env, EXPO_WEB_BUILD: '1' },
+});
 
 // dist/ now contains the Expo web build (index.html, _expo/, assets/, etc.)
 
